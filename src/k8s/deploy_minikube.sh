@@ -40,4 +40,4 @@ kubectl -n hackathon exec deployment/hackathon-backend -- \
 kubectl -n hackathon rollout status deployment/hackathon-frontend
 
 echo "Run: kubectl -n hackathon port-forward service/hackathon-frontend 5173:5173"
-echo "SigNoz: kubectl -n signoz port-forward service/signoz 8080:8080"
+echo "SigNoz: kubectl -n hackathon port-forward service/signoz 8080:8080"

@@ -5,4 +5,5 @@ opentelemetry-instrumentation-django==0.65b0
 opentelemetry-instrumentation-logging==0.65b0
 opentelemetry-instrumentation-psycopg==0.65b0
 opentelemetry-instrumentation-system-metrics==0.65b0
+opentelemetry-instrumentation-urllib==0.65b0
 psycopg[binary]==3.2.10

@@ -35,9 +35,9 @@ Build and deploy the frontend, backend, PostgreSQL, and SigNoz:
 ```
 
 The script creates the `hackathon` namespace, deploys the application, and runs
-the default Django migrations. It installs pinned official SigNoz Helm charts in
-the separate `signoz` namespace. The Django service exports its traces, HTTP and
-database metrics, and trace-correlated application logs directly over OTLP.
+the default Django migrations. It installs the pinned official SigNoz Helm chart
+in the same namespace. The Django service exports its HTTP, database, and Bright
+Data traces, application metrics, and trace-correlated logs directly over OTLP.
 
 To update only SigNoz, run:
 
@@ -77,7 +77,7 @@ The default Django admin is at <http://localhost:8000/admin/>.
 Forward the SigNoz UI in another terminal:
 
 ```bash
-kubectl -n signoz port-forward service/signoz 8080:8080
+kubectl -n hackathon port-forward service/signoz 8080:8080
 ```
 
 Open <http://localhost:8080> and create the local administrator account when
@@ -104,8 +104,8 @@ kubectl -n hackathon get deployments,pods,services
 kubectl -n hackathon logs -f deployment/hackathon-backend
 kubectl -n hackathon logs -f deployment/hackathon-frontend
 kubectl -n hackathon logs -f deployment/hackathon-postgres
-kubectl -n signoz get pods
-kubectl -n signoz logs deployment/signoz-otel-collector --tail=100
+kubectl -n hackathon get pods
+kubectl -n hackathon logs deployment/signoz-otel-collector --tail=100
 ```
 
 Use `Ctrl-C` to stop following logs or to stop a port-forward.

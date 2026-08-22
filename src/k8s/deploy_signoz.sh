@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SIGNOZ_NAMESPACE="${SIGNOZ_NAMESPACE:-signoz}"
+SIGNOZ_NAMESPACE="${SIGNOZ_NAMESPACE:-hackathon}"
 SIGNOZ_CHART_VERSION="${SIGNOZ_CHART_VERSION:-0.138.0}"
 
 for required_command in helm kubectl; do
@@ -28,7 +28,15 @@ helm upgrade --install signoz signoz/signoz \
   --version "${SIGNOZ_CHART_VERSION}" \
   --values "${SCRIPT_DIR}/signoz-values.yaml" \
   --wait \
-  --timeout 30m
+  --timeout 1h
+
+# A fresh SigNoz 0.138 install has no organization yet. Its OpAMP manager
+# otherwise replaces the collector pipelines with no-op pipelines, preventing
+# local applications from sending telemetry before the first UI sign-up.
+kubectl -n "${SIGNOZ_NAMESPACE}" patch deployment signoz-otel-collector \
+  --type=json \
+  -p='[{"op":"replace","path":"/spec/template/spec/containers/0/args","value":["--config=/conf/otel-collector-config.yaml"]}]'
+kubectl -n "${SIGNOZ_NAMESPACE}" rollout status deployment/signoz-otel-collector --timeout=5m
 
 kubectl -n "${SIGNOZ_NAMESPACE}" get pods
 
