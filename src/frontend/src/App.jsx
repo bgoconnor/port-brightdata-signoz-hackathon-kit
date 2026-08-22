@@ -30,11 +30,11 @@ class PFBoundary extends React.Component {
   }
 }
 
-/* Top bar: logo tile, factory/settings tabs, the "N repros ready" pill and
-   the waitlist CTA. The live/poll chip, theme toggle and sign-in button were
-   removed by design; theme still honours localStorage and the sign-in screen
-   is kept in code but unlinked. */
-function TopBar({ awaiting, view, go }) {
+/* Top bar: logo tile, factory/settings tabs, then on the right the
+   "N repros ready" pill, the light/dark toggle and the waitlist CTA.
+   The live/poll chip and sign-in button stay removed; SignInScreen is
+   kept in code but unlinked. */
+function TopBar({ awaiting, view, go, theme, onTheme }) {
   const tab = (k, label) => (
     <button className="pf-tab" aria-current={view === k || (k === "list" && view === "detail") ? "page" : undefined} onClick={() => go(k)}>{label}</button>
   );
@@ -49,6 +49,7 @@ function TopBar({ awaiting, view, go }) {
         </nav>
         <div className="pf-top-right">
           {awaiting > 0 ? <div className="pf-await"><i></i>{awaiting} repros ready</div> : null}
+          <button className="pf-tab" onClick={onTheme}>{theme === "dark" ? "light mode" : "dark mode"}</button>
           <button className="pf-cta" onClick={() => go("waitlist")}>join the waitlist</button>
         </div>
       </div>
@@ -128,7 +129,7 @@ export default function PaperFactory() {
 
   return (
     <div className="pf-shell">
-      <TopBar awaiting={awaiting} view={view.name} go={go} />
+      <TopBar awaiting={awaiting} view={view.name} go={go} theme={theme} onTheme={() => setTheme(t => (t === "dark" ? "light" : "dark"))} />
       <PFBoundary>
         {view.name === "list"
           ? <PipelineScreen list={list} summary={summary} notice={notice} onOpen={open} onWaitlist={() => go("waitlist")} />
