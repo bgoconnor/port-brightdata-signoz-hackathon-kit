@@ -68,8 +68,11 @@ class Command(BaseCommand):
                     continue
 
                 _, was_created = Paper.objects.update_or_create(
-                    arxiv_id=arxiv_id,
+                    paper_id=f'arxiv:{arxiv_id}',
                     defaults={
+                        'source': 'arxiv',
+                        'source_id': arxiv_id,
+                        'arxiv_id': arxiv_id,
                         'title': str(raw.get('title') or '').strip(),
                         'authors': raw.get('authors') or [],
                         'abstract': str(raw.get('abstract') or '').strip(),
@@ -77,7 +80,6 @@ class Command(BaseCommand):
                         'score': float(raw.get('score') or 0.0),
                         'reproducible': bool(raw.get('reproducible')),
                         'scraped_at': _parse_scraped_at(raw.get('scraped_at')),
-                        'source': str(raw.get('source') or DEFAULT_SOURCE),
                         'source_url': raw.get('source_url')
                         or f'https://arxiv.org/abs/{arxiv_id}',
                     },

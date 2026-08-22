@@ -17,10 +17,10 @@ resources when your current profile is smaller:
 minikube start --memory=8g --cpus=4 --disk-size=30g
 ```
 
-The root `.env` must contain `BRIGHTDATA_API_KEY` and
-`BRIGHTDATA_COLLECTOR_ID=c_mt4y2std23j5floxrv`. This single hosted scraper
-returns up to three complete papers per run. The deploy script loads both values
-and creates or updates the `hackathon-brightdata` Kubernetes Secret.
+The root `.env` must contain `BRIGHTDATA_API_KEY`, `BRIGHTDATA_COLLECTOR_ID`, and
+`BRIGHTDATA_ANTHROPIC_COLLECTOR_ID`. `BRIGHTDATA_OPENAI_COLLECTOR_ID` is optional
+until a healthy OpenAI collector is configured. The deploy script loads them and
+creates or updates the `hackathon-brightdata` Kubernetes Secret.
 
 ## Start the project
 
@@ -102,13 +102,20 @@ In SigNoz, look for:
 ## Check status and logs
 
 ```bash
-kubectl -n hackathon get deployments,pods,services
+kubectl -n hackathon get deployments,statefulsets,daemonsets,pods,services
+helm list -n hackathon
 kubectl -n hackathon logs -f deployment/hackathon-backend
 kubectl -n hackathon logs -f deployment/hackathon-frontend
 kubectl -n hackathon logs -f deployment/hackathon-postgres
 kubectl -n signoz get pods
 kubectl -n signoz logs deployment/signoz-otel-collector --tail=100
 ```
+
+The deployment follows SigNoz's official
+[local Kubernetes installation](https://signoz.io/docs/install/kubernetes/local/)
+and [K8s Infra installation](https://signoz.io/docs/opentelemetry-collection-agents/k8s/k8s-infra/install-k8s-infra/)
+guides. Use `deploy_signoz.sh` for upgrades because it also applies the local
+pre-sign-up collector configuration required by this deployment.
 
 Use `Ctrl-C` to stop following logs or to stop a port-forward.
 
@@ -119,6 +126,8 @@ For example:
 ```bash
 kubectl -n hackathon exec deployment/hackathon-backend -- python manage.py check
 kubectl -n hackathon exec deployment/hackathon-backend -- python manage.py scrape_papers
+kubectl -n hackathon exec deployment/hackathon-backend -- python manage.py scrape_papers --source anthropic
+kubectl -n hackathon exec deployment/hackathon-backend -- python manage.py scrape_papers --source openai
 kubectl -n hackathon exec -it deployment/hackathon-backend -- python manage.py createsuperuser
 ```
 

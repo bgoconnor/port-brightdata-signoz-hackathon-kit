@@ -1,0 +1,53 @@
+{
+  "schema": {
+    "properties": {
+      "run_status": {
+        "title": "Execution Status",
+        "type": "string",
+        "enum": ["pending", "queued", "running", "passed", "succeeded", "failed", "canceled"],
+        "enumColors": {
+          "pending": "yellow",
+          "queued": "yellow",
+          "running": "blue",
+          "passed": "green",
+          "succeeded": "green",
+          "failed": "red",
+          "canceled": "red"
+        }
+      },
+      "factory_status": {
+        "title": "Factory Status",
+        "type": "string",
+        "enum": ["discovered", "enriching", "assessing", "blocked", "planning", "preparing", "execution_pending", "executing", "repairing", "comparing", "pending_review", "approved", "rejected", "failed", "generating", "validating"],
+        "enumColors": {
+          "discovered": "blue",
+          "enriching": "blue",
+          "assessing": "blue",
+          "blocked": "red",
+          "planning": "blue",
+          "preparing": "blue",
+          "execution_pending": "yellow",
+          "executing": "blue",
+          "repairing": "orange",
+          "comparing": "blue",
+          "pending_review": "yellow",
+          "approved": "green",
+          "rejected": "red",
+          "failed": "red",
+          "generating": "blue",
+          "validating": "blue"
+        }
+      },
+      "port_run_id": {"title": "Port Run ID", "type": "string"},
+      "execution_run_id": {"title": "Execution Run ID", "type": "string"},
+      "job_name": {"title": "Kubernetes Job", "type": "string"},
+      "attempt_number": {"title": "Attempt Number", "type": "number"},
+      "execution_request": {"title": "Execution Request", "type": "object"},
+      "execution_result": {"title": "Execution Result", "type": "object"},
+      "trace_id": {"title": "Trace ID", "type": "string"},
+      "requested_at": {"title": "Requested At", "type": "string", "format": "date-time"},
+      "started_at": {"title": "Started At", "type": "string", "format": "date-time"},
+      "completed_at": {"title": "Completed At", "type": "string", "format": "date-time"}
+    }
+  }
+}

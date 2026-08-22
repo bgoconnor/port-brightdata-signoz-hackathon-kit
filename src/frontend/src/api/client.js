@@ -44,6 +44,7 @@ export function normalizePaper(raw) {
   const result = p.repro_result;
 
   return {
+    paper_id: asString(p.paper_id, asString(p.arxiv_id, "unknown")),
     arxiv_id: asString(p.arxiv_id, "unknown"),
     title: asString(p.title, "Untitled"),
     authors: asArray(p.authors).map((a) => asString(a)),
@@ -60,7 +61,7 @@ export function normalizePaper(raw) {
     run_output: asString(p.run_output),
     review_note: asString(p.review_note),
     repro_summary: asString(p.repro_summary),
-    repo_url: asString(p.repo_url),
+    evidence_url: asString(p.evidence_url, asString(p.repo_url)),
     repro_result:
       result && typeof result === "object"
         ? {

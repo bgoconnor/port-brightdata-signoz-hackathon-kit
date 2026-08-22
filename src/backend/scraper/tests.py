@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from .models import Paper, ScrapeRun
-from .services import refresh_scrape, start_scrape
+from .services import _normalize_record, refresh_scrape, start_scrape
 
 
 BRIGHT_ENV = {
@@ -42,6 +42,8 @@ class ScrapeLifecycleTests(TestCase):
         self.assertEqual(run.status, ScrapeRun.Status.COMPLETED)
         self.assertEqual(run.records_written, 1)
         paper = Paper.objects.get(arxiv_id='2608.00001')
+        self.assertEqual(paper.paper_id, 'arxiv:2608.00001')
+        self.assertEqual(paper.source, 'arxiv')
         self.assertTrue(paper.reproducible)
         self.assertEqual(paper.authors, ['Ada Lovelace'])
         self.assertGreater(len(paper.full_text), 1000)
@@ -67,6 +69,9 @@ class ScrapeLifecycleTests(TestCase):
 class PaperApiTests(TestCase):
     def test_paper_list_returns_article_contract(self):
         Paper.objects.create(
+            paper_id='arxiv:2608.00003',
+            source='arxiv',
+            source_id='2608.00003',
             arxiv_id='2608.00003',
             title='A paper',
             authors=['Grace Hopper'],
@@ -82,3 +87,37 @@ class PaperApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(response.json()['papers'][0]['arxiv_id'], '2608.00003')
+
+
+class MultiSourceTests(TestCase):
+    def test_company_publication_gets_source_qualified_identity(self):
+        record = _normalize_record({
+            'source_id': 'teaching-claude-why',
+            'title': 'Teaching Claude why',
+            'authors': [],
+            'abstract': 'An explicit research summary.',
+            'subjects': ['Alignment'],
+            'published_at': '2026-05-08T00:00:00Z',
+            'source_url': 'https://www.anthropic.com/research/teaching-claude-why',
+            'full_text': 'Methods and evidence. ' * 80,
+        }, timezone.now(), 'anthropic')
+
+        self.assertEqual(record['paper_id'], 'anthropic:teaching-claude-why')
+        self.assertIsNone(record['arxiv_id'])
+        self.assertEqual(record['authors'], ['Anthropic'])
+        self.assertIsNotNone(record['published_at'])
+
+    @patch.dict(os.environ, {
+        'BRIGHTDATA_API_KEY': 'test-key',
+        'BRIGHTDATA_ANTHROPIC_COLLECTOR_ID': 'c_anthropic',
+    })
+    @patch('scraper.services._request_json')
+    def test_anthropic_run_uses_its_hosted_collector(self, request_json):
+        request_json.return_value = {'collection_id': 'j_anthropic'}
+
+        run = start_scrape('anthropic')
+
+        self.assertEqual(run.source, 'anthropic')
+        self.assertEqual(run.collector_id, 'c_anthropic')
+        self.assertEqual(run.target_url, 'https://www.anthropic.com/research')
+        request_json.assert_called_once()

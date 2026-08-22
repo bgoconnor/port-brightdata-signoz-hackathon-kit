@@ -64,8 +64,8 @@ export function PaperRow({ p, onOpen }) {
   const fam = pfStatus(p.status).fam;
   return (
     <div className="pf-row" data-fam={fam} role="button" tabIndex={0}
-      onClick={() => onOpen(p.arxiv_id)}
-      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(p.arxiv_id); } }}>
+      onClick={() => onOpen(p.paper_id)}
+      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(p.paper_id); } }}>
       <div>
         <div className="pf-ttl">{p.title}</div>
         <div className="pf-sub">
@@ -139,7 +139,7 @@ export function PipelineScreen({ list, summary, notice, onOpen, onWaitlist }) {
           <div>paper</div><div>authors</div><div>score</div><div>factory state</div>
         </div>
         {rows.length
-          ? rows.map(p => <PaperRow key={p.arxiv_id} p={p} onOpen={onOpen} />)
+          ? rows.map(p => <PaperRow key={p.paper_id} p={p} onOpen={onOpen} />)
           : <div className="pf-empty">{query
             ? "No title contains “" + query + "” under this filter."
             : "No papers match this filter."} {list.length ? "Clear it to see all " + list.length + " papers." : "Waiting for the first scrape to land."}</div>}
@@ -148,5 +148,4 @@ export function PipelineScreen({ list, summary, notice, onOpen, onWaitlist }) {
     </div>
   );
 }
-
 

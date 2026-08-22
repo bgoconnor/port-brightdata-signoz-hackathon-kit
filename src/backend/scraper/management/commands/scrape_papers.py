@@ -10,11 +10,12 @@ class Command(BaseCommand):
     help = 'Run the configured Bright Data collector and ingest its papers.'
 
     def add_arguments(self, parser):
+        parser.add_argument('--source', choices=('arxiv', 'anthropic', 'openai'), default='arxiv')
         parser.add_argument('--poll-interval', type=float, default=5)
         parser.add_argument('--timeout', type=int, default=600)
 
     def handle(self, *args, **options):
-        run = start_scrape()
+        run = start_scrape(options['source'])
         if run.status == ScrapeRun.Status.FAILED:
             raise CommandError(run.error)
         self.stdout.write(f'Triggered Bright Data job {run.bright_job_id}')

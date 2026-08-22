@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from .models import Attempt, Paper, Reproduction, ScrapeRun
-from .services import control_scrape, refresh_scrape, start_scrape
+from .services import BrightDataError, control_scrape, refresh_scrape, start_scrape
 
 
 def _serialize_run(run: ScrapeRun) -> dict:
@@ -35,6 +35,7 @@ def _serialize_paper(paper: Paper) -> dict:
     nothing, and the detail call must return it anyway.
     """
     return {
+        'paper_id': paper.paper_id,
         'arxiv_id': paper.arxiv_id,
         'title': paper.title,
         'authors': paper.authors,
@@ -43,8 +44,9 @@ def _serialize_paper(paper: Paper) -> dict:
         'score': paper.score,
         'reproducible': paper.reproducible,
         'scraped_at': paper.scraped_at.isoformat(),
-        'source': paper.source or 'arXiv',
-        'source_url': paper.source_url or '',
+        'source': paper.source,
+        'source_id': paper.source_id,
+        'source_url': paper.source_url or paper.full_text_source_url or paper.pdf_url,
         'status': paper.status or Paper.Status.INGESTED,
         'retry_count': paper.retry_count,
         # Bright Data full-text enrichment (from the complete-paper runtime)
@@ -81,7 +83,7 @@ def _serialize_detail(paper: Paper) -> dict:
                 'run_output': '',
                 'review_note': '',
                 'repro_summary': '',
-                'repo_url': '',
+                'evidence_url': '',
                 'repro_result': None,
                 'attempts': [],
             }
@@ -94,7 +96,7 @@ def _serialize_detail(paper: Paper) -> dict:
             'run_output': repro.run_output,
             'review_note': repro.review_note,
             'repro_summary': repro.repro_summary,
-            'repo_url': repro.repo_url,
+            'evidence_url': repro.evidence_url,
             'repro_result': repro.repro_result,
             'attempts': [_serialize_attempt(a) for a in repro.attempts.all()],
         }
@@ -134,22 +136,22 @@ def papers(request):
 
 
 @require_GET
-def paper_detail(request, arxiv_id: str):
+def paper_detail(request, paper_id: str):
     paper = get_object_or_404(
-        Paper.objects.prefetch_related('reproduction__attempts'), pk=arxiv_id
+        Paper.objects.prefetch_related('reproduction__attempts'), pk=paper_id
     )
     return JsonResponse(_serialize_detail(paper))
 
 
 @csrf_exempt
 @require_POST
-def paper_review(request, arxiv_id: str):
+def paper_review(request, paper_id: str):
     """Record an approve/reject decision.
 
     Idempotent: repeating the same decision returns the same payload with 200.
     Port remains the system of record; the sync layer propagates the decision.
     """
-    paper = get_object_or_404(Paper, pk=arxiv_id)
+    paper = get_object_or_404(Paper, pk=paper_id)
 
     try:
         payload = json.loads(request.body or b'{}')

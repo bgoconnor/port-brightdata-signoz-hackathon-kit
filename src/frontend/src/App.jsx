@@ -115,7 +115,7 @@ export default function PaperFactory() {
     setBusy(true);
     const optimistic = decision === "approve" ? "approved" : "rejected";
     setDetail(d => (d ? Object.assign({}, d, { status: optimistic }) : d));
-    setList(l => l.map(p => (p.arxiv_id === id ? Object.assign({}, p, { status: optimistic }) : p)));
+    setList(l => l.map(p => (p.paper_id === id ? Object.assign({}, p, { status: optimistic }) : p)));
     submitReview(id, decision).then(r => {
       if (r.data) setDetail(r.data);
       setDetailNotice(r.notice);
@@ -125,7 +125,7 @@ export default function PaperFactory() {
   }, [poll]);
 
   const awaiting = list.filter(p => p.status === "awaiting_review").length;
-  const stub = view.id ? list.find(p => p.arxiv_id === view.id) : null;
+  const stub = view.id ? list.find(p => p.paper_id === view.id) : null;
 
   return (
     <div className="pf-shell">
@@ -144,5 +144,4 @@ export default function PaperFactory() {
     </div>
   );
 }
-
 

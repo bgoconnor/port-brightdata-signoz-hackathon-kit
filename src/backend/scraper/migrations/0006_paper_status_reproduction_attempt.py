@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('scraper', '0004_single_collector_contract'),
+        ('scraper', '0005_multi_source_papers'),
     ]
 
     operations = [
@@ -15,11 +15,6 @@ class Migration(migrations.Migration):
             model_name='paper',
             name='retry_count',
             field=models.PositiveIntegerField(default=0),
-        ),
-        migrations.AddField(
-            model_name='paper',
-            name='source',
-            field=models.CharField(default='arXiv', max_length=64),
         ),
         migrations.AddField(
             model_name='paper',
@@ -41,7 +36,7 @@ class Migration(migrations.Migration):
                 ('run_status', models.CharField(choices=[('pending', 'Pending'), ('passed', 'Passed'), ('failed', 'Failed')], default='pending', max_length=16)),
                 ('retry_count', models.PositiveIntegerField(default=0)),
                 ('repro_summary', models.TextField(blank=True)),
-                ('repo_url', models.URLField(blank=True, max_length=500)),
+                ('evidence_url', models.URLField(blank=True, max_length=500)),
                 ('repro_result', models.JSONField(blank=True, null=True)),
                 ('review_note', models.TextField(blank=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),

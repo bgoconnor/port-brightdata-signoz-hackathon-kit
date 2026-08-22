@@ -91,6 +91,16 @@ spec:
                 secretKeyRef:
                   name: hackathon-brightdata
                   key: BRIGHTDATA_COLLECTOR_ID
+            - name: BRIGHTDATA_ANTHROPIC_COLLECTOR_ID
+              valueFrom:
+                secretKeyRef:
+                  name: hackathon-brightdata
+                  key: BRIGHTDATA_ANTHROPIC_COLLECTOR_ID
+            - name: BRIGHTDATA_OPENAI_COLLECTOR_ID
+              valueFrom:
+                secretKeyRef:
+                  name: hackathon-brightdata
+                  key: BRIGHTDATA_OPENAI_COLLECTOR_ID
             - name: DJANGO_SETTINGS_MODULE
               value: config.settings
             - name: OTEL_SERVICE_NAME

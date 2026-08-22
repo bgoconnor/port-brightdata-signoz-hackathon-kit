@@ -17,11 +17,14 @@ set +a
 
 : "${BRIGHTDATA_API_KEY:?BRIGHTDATA_API_KEY must be set in ${ENV_FILE}}"
 : "${BRIGHTDATA_COLLECTOR_ID:?BRIGHTDATA_COLLECTOR_ID must be set in ${ENV_FILE}}"
+: "${BRIGHTDATA_ANTHROPIC_COLLECTOR_ID:?BRIGHTDATA_ANTHROPIC_COLLECTOR_ID must be set in ${ENV_FILE}}"
 
 kubectl create namespace hackathon --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n hackathon create secret generic hackathon-brightdata \
   --from-literal=BRIGHTDATA_API_KEY="${BRIGHTDATA_API_KEY}" \
   --from-literal=BRIGHTDATA_COLLECTOR_ID="${BRIGHTDATA_COLLECTOR_ID}" \
+  --from-literal=BRIGHTDATA_ANTHROPIC_COLLECTOR_ID="${BRIGHTDATA_ANTHROPIC_COLLECTOR_ID}" \
+  --from-literal=BRIGHTDATA_OPENAI_COLLECTOR_ID="${BRIGHTDATA_OPENAI_COLLECTOR_ID:-}" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 if [[ "${HACKATHON_SKIP_SIGNOZ:-0}" != "1" ]]; then
