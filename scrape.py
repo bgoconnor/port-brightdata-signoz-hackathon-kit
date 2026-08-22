@@ -44,8 +44,11 @@ def string_list(value: Any) -> list[str]:
 
 
 def normalize_record(raw: dict[str, Any], scraped_at: str) -> dict[str, Any]:
+    arxiv_id = str(raw.get("arxiv_id") or raw.get("id") or "").strip()
+    if arxiv_id.lower().startswith("arxiv:"):
+        arxiv_id = arxiv_id.split(":", 1)[1].strip()
     paper = {
-        "arxiv_id": str(raw.get("arxiv_id") or raw.get("id") or "").strip(),
+        "arxiv_id": arxiv_id,
         "title": str(raw.get("title") or "").strip(),
         "authors": string_list(raw.get("authors")),
         "abstract": str(raw.get("abstract") or raw.get("summary") or "").strip(),

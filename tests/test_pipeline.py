@@ -15,7 +15,7 @@ class PipelineTests(unittest.TestCase):
     def test_normalizes_aliases_and_lists(self):
         paper = normalize_record(
             {
-                "id": "2608.1",
+                "id": "arXiv:2608.1",
                 "title": " Example ",
                 "authors": "Ada, Grace",
                 "summary": "We propose a toy algorithm.",
@@ -24,6 +24,7 @@ class PipelineTests(unittest.TestCase):
             "2026-08-22T00:00:00Z",
         )
         self.assertEqual(paper["authors"], ["Ada", "Grace"])
+        self.assertEqual(paper["arxiv_id"], "2608.1")
         self.assertEqual(paper["subjects"], ["cs.AI", "cs.LG"])
 
     def test_rejects_incomplete_paper(self):
