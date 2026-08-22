@@ -1,0 +1,16 @@
+[
+  {
+    "title": "A Toy Algorithm for Reliable Agent Planning",
+    "authors": ["Ada Example", "Grace Example"],
+    "arxiv_id": "2608.00001",
+    "abstract": "We propose an algorithm with a synthetic experiment that illustrates reliable planning under changing constraints.",
+    "subjects": ["cs.AI", "cs.LG"]
+  },
+  {
+    "title": "A Survey of Agentic Software Systems",
+    "authors": ["Hugh Example"],
+    "arxiv_id": "2608.00002",
+    "abstract": "We survey recent work and organize the literature into a taxonomy of agentic software systems.",
+    "subjects": ["cs.AI"]
+  }
+]
