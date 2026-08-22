@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paper-factory.local/contracts/execution-result-v1.schema.json",
+  "title": "Reproduction execution result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "reproduction_identifier", "execution_run_id", "status", "attempt_number"],
+  "properties": {
+    "contract_version": {"const": "v1"},
+    "reproduction_identifier": {"type": "string", "minLength": 1},
+    "execution_run_id": {"type": "string", "minLength": 1},
+    "job_name": {"type": "string"},
+    "status": {"enum": ["succeeded", "failed", "blocked", "canceled"]},
+    "attempt_number": {"type": "integer", "minimum": 1},
+    "selected_claim": {"type": "string"},
+    "scope": {"enum": ["full_claim", "partial_claim", "mechanism_demo", "blocked"]},
+    "feasibility_notes": {"type": "string"},
+    "experiment_manifest": {"type": "object"},
+    "reported_result": {"type": "string"},
+    "observed_result": {"type": "string"},
+    "comparison_rule": {"type": "string"},
+    "outcome": {"enum": ["reproduced", "not_reproduced", "inconclusive", "blocked"]},
+    "evidence_url": {"type": "string", "format": "uri"},
+    "error": {"type": "string"},
+    "trace_id": {"type": "string"},
+    "started_at": {"type": "string", "format": "date-time"},
+    "completed_at": {"type": "string", "format": "date-time"}
+  }
+}

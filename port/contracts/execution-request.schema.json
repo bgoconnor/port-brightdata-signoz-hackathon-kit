@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://paper-factory.local/contracts/execution-request-v1.schema.json",
+  "title": "Reproduction execution request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "state", "reproduction_identifier", "paper_identifier", "port_run_id", "attempt_number", "requested_scope"],
+  "properties": {
+    "contract_version": {"const": "v1"},
+    "state": {"enum": ["not_ready", "ready"]},
+    "reproduction_identifier": {"type": "string", "minLength": 1},
+    "paper_identifier": {"type": "string", "minLength": 1},
+    "port_run_id": {"type": "string", "minLength": 1},
+    "attempt_number": {"type": "integer", "minimum": 1},
+    "requested_scope": {"enum": ["full_claim", "partial_claim", "mechanism_demo"]},
+    "claim_hint": {"type": "string"},
+    "traceparent": {"type": "string"}
+  }
+}

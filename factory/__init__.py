@@ -1,1 +1,1 @@
-"""Paper Factory reproduction generation and validation support."""
+"""Shared, execution-neutral contracts for paper reproduction attempts."""
