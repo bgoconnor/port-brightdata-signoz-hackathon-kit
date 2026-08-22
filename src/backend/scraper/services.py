@@ -16,7 +16,12 @@ from .models import Paper, ScrapeRun
 
 BRIGHTDATA_API_URL = 'https://api.brightdata.com'
 DEFAULT_TARGET_URL = 'https://arxiv.org/list/cs.AI/new'
-REQUIRED_FIELDS = ('arxiv_id', 'title', 'authors', 'abstract', 'subjects', 'full_text')
+SOURCE_CONFIG = {
+    'arxiv': ('BRIGHTDATA_COLLECTOR_ID', 'BRIGHTDATA_TARGET_URL', DEFAULT_TARGET_URL),
+    'anthropic': ('BRIGHTDATA_ANTHROPIC_COLLECTOR_ID', 'BRIGHTDATA_ANTHROPIC_TARGET_URL', 'https://www.anthropic.com/research'),
+    'openai': ('BRIGHTDATA_OPENAI_COLLECTOR_ID', 'BRIGHTDATA_OPENAI_TARGET_URL', 'https://openai.com/research/index/'),
+}
+REQUIRED_FIELDS = ('source_id', 'title', 'authors', 'abstract', 'full_text')
 SCORE_SIGNALS = {
     'algorithm': 0.22,
     'we propose': 0.22,
@@ -31,12 +36,16 @@ class BrightDataError(RuntimeError):
     pass
 
 
-def _configuration() -> tuple[str, str, str]:
+def _configuration(source: str) -> tuple[str, str, str]:
     api_key = _api_key()
-    collector_id = os.environ.get('BRIGHTDATA_COLLECTOR_ID', '').strip()
-    target_url = os.environ.get('BRIGHTDATA_TARGET_URL', DEFAULT_TARGET_URL).strip()
+    try:
+        collector_env, target_env, default_url = SOURCE_CONFIG[source]
+    except KeyError as error:
+        raise BrightDataError(f'Unknown paper source: {source}') from error
+    collector_id = os.environ.get(collector_env, '').strip()
+    target_url = os.environ.get(target_env, default_url).strip()
     if not collector_id:
-        raise BrightDataError('BRIGHTDATA_COLLECTOR_ID is not configured')
+        raise BrightDataError(f'{collector_env} is not configured')
     return api_key, collector_id, target_url
 
 
@@ -95,16 +104,25 @@ def _string_list(value: Any) -> list[str]:
     return []
 
 
-def _normalize_record(raw: dict[str, Any], scraped_at: datetime) -> dict[str, Any]:
-    arxiv_id = str(raw.get('arxiv_id') or raw.get('id') or '').strip()
-    if arxiv_id.lower().startswith('arxiv:'):
+def _normalize_record(raw: dict[str, Any], scraped_at: datetime, source: str = 'arxiv') -> dict[str, Any]:
+    source_id = str(raw.get('source_id') or raw.get('arxiv_id') or raw.get('id') or '').strip()
+    arxiv_id = str(raw.get('arxiv_id') or (source_id if source == 'arxiv' else '')).strip() or None
+    if arxiv_id and arxiv_id.lower().startswith('arxiv:'):
         arxiv_id = arxiv_id.split(':', 1)[1].strip()
+    if source == 'arxiv':
+        source_id = arxiv_id or ''
+    publisher = {'arxiv': 'arXiv', 'anthropic': 'Anthropic', 'openai': 'OpenAI'}[source]
     paper = {
+        'paper_id': f'{source}:{source_id}',
+        'source': source,
+        'source_id': source_id,
         'arxiv_id': arxiv_id,
         'title': str(raw.get('title') or '').strip(),
-        'authors': _string_list(raw.get('authors')),
+        'authors': _string_list(raw.get('authors')) or [publisher],
         'abstract': str(raw.get('abstract') or raw.get('summary') or '').strip(),
         'subjects': _string_list(raw.get('subjects') or raw.get('categories')),
+        'published_at': _parse_bright_datetime(raw.get('published_at') or raw.get('published')),
+        'pdf_url': str(raw.get('pdf_url') or '').strip(),
         'full_text': str(raw.get('full_text') or '').strip(),
         'full_text_source_url': str(raw.get('source_url') or '').strip(),
         'full_text_acquired_at': scraped_at,
@@ -112,10 +130,10 @@ def _normalize_record(raw: dict[str, Any], scraped_at: datetime) -> dict[str, An
     }
     missing = [field for field in REQUIRED_FIELDS if not paper[field]]
     if missing:
-        identity = paper['arxiv_id'] or paper['title'] or '<unknown>'
+        identity = paper['source_id'] or paper['title'] or '<unknown>'
         raise BrightDataError(f'Paper {identity} is missing required fields: {missing}')
     if len(paper['full_text']) < 1000:
-        raise BrightDataError(f"Paper {paper['arxiv_id']} returned too little full text")
+        raise BrightDataError(f"Paper {paper['paper_id']} returned too little full text")
     text = f"{paper['title']} {paper['abstract']}".lower()
     paper['score'] = round(
         min(1.0, sum(weight for term, weight in SCORE_SIGNALS.items() if term in text)),
@@ -134,12 +152,12 @@ def _fail_run(run: ScrapeRun, error: Exception) -> ScrapeRun:
     return run
 
 
-def start_scrape() -> ScrapeRun:
+def start_scrape(source: str = 'arxiv') -> ScrapeRun:
     try:
-        _, collector_id, target_url = _configuration()
+        _, collector_id, target_url = _configuration(source)
     except BrightDataError:
         raise
-    run = ScrapeRun.objects.create(collector_id=collector_id, target_url=target_url)
+    run = ScrapeRun.objects.create(source=source, collector_id=collector_id, target_url=target_url)
     try:
         query = urlencode({'collector': collector_id, 'queue_next': 1})
         response = _request_json('POST', f'/dca/trigger?{query}', [{'url': target_url}])
@@ -170,7 +188,7 @@ def _ingest_results(run: ScrapeRun) -> ScrapeRun:
         raise BrightDataError('Bright Data completed without any paper records')
 
     scraped_at = run.bright_finished_at or timezone.now()
-    records = [_normalize_record(record, scraped_at) for record in response]
+    records = [_normalize_record(record, scraped_at, run.source) for record in response]
     for record in records:
         record['full_text_collection_id'] = run.bright_job_id or ''
     papers = [Paper(**record) for record in records]
@@ -178,9 +196,10 @@ def _ingest_results(run: ScrapeRun) -> ScrapeRun:
         Paper.objects.bulk_create(
             papers,
             update_conflicts=True,
-            unique_fields=('arxiv_id',),
+            unique_fields=('paper_id',),
             update_fields=(
-                'title', 'authors', 'abstract', 'subjects',
+                'source', 'source_id', 'arxiv_id', 'title', 'authors', 'abstract', 'subjects',
+                'published_at', 'pdf_url',
                 'score', 'reproducible', 'scraped_at',
                 'full_text', 'full_text_source_url', 'full_text_sha256',
                 'full_text_acquired_at', 'full_text_collection_id',

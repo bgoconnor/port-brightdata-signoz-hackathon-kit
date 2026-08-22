@@ -32,6 +32,7 @@ export default function App() {
   const [runs, setRuns] = useState([]);
   const [query, setQuery] = useState("");
   const [reproducibleOnly, setReproducibleOnly] = useState(false);
+  const [paperSource, setPaperSource] = useState("arxiv");
   const [loading, setLoading] = useState(true);
   const [action, setAction] = useState("");
   const [error, setError] = useState("");
@@ -57,7 +58,11 @@ export default function App() {
     setAction("start");
     setError("");
     try {
-      await api("/api/scrape-runs/", { method: "POST" });
+      await api("/api/scrape-runs/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source: paperSource }),
+      });
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -114,11 +119,18 @@ export default function App() {
         <div>
           <p className="eyebrow">Bright Data → Django → PostgreSQL</p>
           <h1>Paper Factory</h1>
-          <p className="intro">Fresh cs.AI papers, scored for reproducible ideas.</p>
+          <p className="intro">Fresh research papers, scored for reproducible ideas.</p>
         </div>
-        <button className="primary-button" onClick={startRun} disabled={Boolean(action)}>
-          {action === "start" ? "Starting…" : "Run Bright scraper"}
-        </button>
+        <div className="run-actions">
+          <select value={paperSource} onChange={(event) => setPaperSource(event.target.value)}>
+            <option value="arxiv">arXiv</option>
+            <option value="anthropic">Anthropic</option>
+            <option value="openai">OpenAI</option>
+          </select>
+          <button className="primary-button" onClick={startRun} disabled={Boolean(action)}>
+            {action === "start" ? "Starting…" : "Run Bright scraper"}
+          </button>
+        </div>
       </header>
 
       {error && <div className="error-banner">{error}</div>}
@@ -140,6 +152,7 @@ export default function App() {
             </strong>
           </div>
           <dl>
+            <div><dt>Source</dt><dd>{latestRun?.source || "—"}</dd></div>
             <div><dt>Bright job</dt><dd>{latestRun?.bright_job_id || "—"}</dd></div>
             <div><dt>Written</dt><dd>{latestRun?.records_written ?? 0}</dd></div>
             <div><dt>Updated</dt><dd>{formatDate(latestRun?.updated_at)}</dd></div>
@@ -203,9 +216,9 @@ export default function App() {
         ) : (
           <div className="paper-grid">
             {visiblePapers.map((paper) => (
-              <article className="paper-card" key={paper.arxiv_id}>
+              <article className="paper-card" key={paper.paper_id}>
                 <div className="paper-meta">
-                  <span>{paper.arxiv_id}</span>
+                  <span>{paper.source}: {paper.source_id}</span>
                   <span className={paper.reproducible ? "score score-high" : "score"}>
                     {Math.round(paper.score * 100)}% score
                   </span>
