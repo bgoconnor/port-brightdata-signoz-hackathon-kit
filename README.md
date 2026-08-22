@@ -27,6 +27,8 @@ Port -> catalog, governance, scorecards, and workflows
 
 - `docs/product-field-guide.md` — concepts, product boundaries, and failure modes.
 - `docs/setup.md` — agent packages, MCP setup, credentials, and smoke tests.
+- `docs/port-mcp-setup.md` — Port MCP installation, OAuth workaround, and verification.
+- `docs/hackathon-context.md` — event constraints, judging criteria, architecture, and scope.
 - `docs/hackathon-plan.md` — recommended architecture and demo milestones.
 - `skills/hackathon-platform-workflow/` — project-local orchestration skill.
 - `.env.example` — variable names only; never commit real secrets.

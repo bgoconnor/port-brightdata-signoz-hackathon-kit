@@ -24,6 +24,8 @@ npx skills add port-labs/port-skills --skill port-workflows
 
 Also consider `port-context-lake`, `port-terraform`, `port-dashboards`, and `port-permissions`.
 
+For live Port catalog access, follow the [Port MCP setup for Codex](port-mcp-setup.md). It includes the read-only default, end-to-end verification, and the OAuth issuer-mismatch workaround validated during this hackathon setup.
+
 ### Bright Data
 
 ```bash
