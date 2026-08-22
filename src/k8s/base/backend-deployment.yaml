@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hackathon-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: hackathon-backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: hackathon-backend
+        app.kubernetes.io/component: backend
+    spec:
+      securityContext:
+        fsGroup: 10001
+      containers:
+        - name: backend
+          image: hackathon-backend:local
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: hackathon-backend-config
+            - secretRef:
+                name: hackathon-backend-secret
+          ports:
+            - name: http
+              containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /api/health/
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/health/
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 96Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            runAsNonRoot: true
+            runAsUser: 10001
+
