@@ -109,7 +109,18 @@ This means the MCP resource URL and the issuer reported by Port's authorization 
 
 `x-read-only-mode: 1` hides Port write tools. Keep it enabled for discovery, diagnosis, and demo preparation.
 
-Enable writes only after reviewing the exact intended changes, the Port organization and region, and the authenticated user's permissions. Replace the server configuration with `x-read-only-mode: 0` only when writes are deliberately required. Port also supports `x-allowed-actions-to-run` for restricting executable actions by identifier.
+Enable writes only after reviewing the exact intended changes, the Port organization and region, and the authenticated user's permissions. Preserve the routine read-only connection and use a separately named profile when writes are deliberately required:
+
+```bash
+codex mcp add port-eu-write -- \
+  npx -y mcp-remote \
+  https://mcp.port.io/v1 \
+  --header "x-read-only-mode: 0"
+```
+
+Port also supports `x-allowed-actions-to-run` for restricting executable actions
+by identifier. Remove or disable the write profile after the scoped setup if it
+is no longer needed.
 
 ## Credentials and automation
 

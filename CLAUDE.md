@@ -2,6 +2,10 @@
 
 The root `SPEC.md` is authoritative. Preserve the paper record contract in §6.
 
+For cross-machine work, follow `docs/team-coordination.md`: Port holds durable
+work/decision state, while GitHub holds code and versioned specifications. Check
+`git status` before every change and record an inspectable handoff before stopping.
+
 ## Bright Data collector
 
 - Name: `paper-factory-arxiv-cs-ai`
