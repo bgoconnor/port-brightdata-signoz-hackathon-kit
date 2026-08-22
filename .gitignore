@@ -12,3 +12,5 @@ captures/
 artifacts/
 brightdata-create.json
 data/*.db
+dist/
+.playwright-mcp/

@@ -1,15 +1,3 @@
-/* Ported from the design handoff (pf-app.jsx) to ES modules.
-   Root: view switching, 4s polling, degradation handling. State-based
-   view switching as in the prototype - no router. */
-
-import React from "react";
-import { PFMark } from "./components/hero.jsx";
-import { Notice } from "./components/ui.jsx";
-import { PipelineScreen } from "./components/list.jsx";
-import { DetailScreen } from "./components/detail.jsx";
-import { SettingsScreen, SignInScreen, WaitlistScreen } from "./components/account.jsx";
-import { fetchPaper, fetchPapers, fetchSummary, submitReview } from "./api/client.js";
-
 /* Paper Factory — root: routing, polling, degradation handling. */
 
 const PF_POLL_MS = 4000;
@@ -58,7 +46,7 @@ function TopBar({ mode, updatedAt, awaiting, view, go, signedIn, theme, onTheme 
   );
 }
 
-export default function PaperFactory() {
+function PaperFactory() {
   const [list, setList] = React.useState([]);
   const [summary, setSummary] = React.useState(null);
   const [mode, setMode] = React.useState("fallback");
@@ -81,11 +69,11 @@ export default function PaperFactory() {
   const clock = () => new Date().toLocaleTimeString([], { hour12: false });
 
   const poll = React.useCallback(() => {
-    fetchSummary().then(r => { setSummary(r.data); setMode(r.source); setNotice(r.notice); setUpdatedAt(clock()); }).catch(() => {});
-    fetchPapers().then(r => { if (Array.isArray(r.data) && r.data.length) setList(r.data); if (r.notice) setNotice(r.notice); }).catch(() => {});
+    PFApi.summary().then(r => { setSummary(r.data); setMode(r.source); setNotice(r.notice); setUpdatedAt(clock()); }).catch(() => {});
+    PFApi.papers().then(r => { if (Array.isArray(r.data) && r.data.length) setList(r.data); if (r.notice) setNotice(r.notice); }).catch(() => {});
     const v = viewRef.current;
     if (v.name === "detail" && v.id) {
-      fetchPaper(v.id).then(r => {
+      PFApi.paper(v.id).then(r => {
         if (viewRef.current.id !== v.id) return;
         if (r.data) setDetail(r.data);
         setDetailNotice(r.notice);
@@ -103,7 +91,7 @@ export default function PaperFactory() {
     setView({ name: "detail", id: id });
     setDetail(null); setDetailNotice(null); setLoadingDetail(true);
     window.scrollTo(0, 0);
-    fetchPaper(id).then(r => { setDetail(r.data); setDetailNotice(r.notice); setLoadingDetail(false); })
+    PFApi.paper(id).then(r => { setDetail(r.data); setDetailNotice(r.notice); setLoadingDetail(false); })
       .catch(() => { setLoadingDetail(false); setDetailNotice("This paper could not be loaded."); });
   }, []);
 
@@ -117,7 +105,7 @@ export default function PaperFactory() {
     const optimistic = decision === "approve" ? "approved" : "rejected";
     setDetail(d => (d ? Object.assign({}, d, { status: optimistic }) : d));
     setList(l => l.map(p => (p.arxiv_id === id ? Object.assign({}, p, { status: optimistic }) : p)));
-    submitReview(id, decision).then(r => {
+    PFApi.review(id, decision).then(r => {
       if (r.data) setDetail(r.data);
       setDetailNotice(r.notice);
       setBusy(false);
@@ -146,4 +134,4 @@ export default function PaperFactory() {
   );
 }
 
-
+Object.assign(window, { PaperFactory, TopBar, PFBoundary, PF_POLL_MS });
