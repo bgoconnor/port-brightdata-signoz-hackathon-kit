@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('scraper', '0002_scraperun'),
+        ('scraper', '0004_single_collector_contract'),
     ]
 
     operations = [
