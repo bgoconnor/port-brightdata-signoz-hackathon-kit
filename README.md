@@ -46,6 +46,8 @@ Both paths publish the stable team contract to `data/papers.json` and SQLite to
 ## Repository contents
 
 - `SPEC.md` — current, authoritative product and implementation specification.
+- `brightdata/` — Bright Data acquisition, scoring, fixture, and pipeline tests.
+- `data/papers.json` — shared normalized paper contract consumed by the application and integrations.
 - `docs/specs/` — immutable source drafts and superseded specification history.
 - `docs/product-field-guide.md` — concepts, product boundaries, and failure modes.
 - `docs/setup.md` — agent packages, MCP setup, credentials, and smoke tests.

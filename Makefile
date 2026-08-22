@@ -4,17 +4,17 @@ COLLECTOR_ID ?=
 .PHONY: fixture scrape serve test clean
 
 fixture:
-	$(PYTHON) scrape.py --input fixtures/brightdata-papers.json
+	$(PYTHON) -m brightdata.scrape --input brightdata/fixtures/brightdata-papers.json
 
 scrape:
 	@test -n "$(COLLECTOR_ID)" || (echo "Usage: make scrape COLLECTOR_ID=c_..." && exit 2)
-	$(PYTHON) scrape.py --collector-id "$(COLLECTOR_ID)"
+	$(PYTHON) -m brightdata.scrape --collector-id "$(COLLECTOR_ID)"
 
 serve: fixture
 	$(PYTHON) -m http.server 8000
 
 test:
-	$(PYTHON) -m unittest discover -s tests -v
+	$(PYTHON) -m unittest discover -s brightdata/tests -v
 
 clean:
 	rm -f data/papers.db data/papers.json artifacts/brightdata-papers.json

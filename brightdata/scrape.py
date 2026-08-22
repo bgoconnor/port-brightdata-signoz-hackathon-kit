@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from score import score_records
+from brightdata.score import score_records
 
 ARXIV_URL = "https://arxiv.org/list/cs.AI/new"
 REQUIRED_FIELDS = ("arxiv_id", "title", "authors", "abstract", "subjects")

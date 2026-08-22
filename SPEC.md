@@ -146,10 +146,10 @@ You own the spine. Everyone else is blocked until T0 lands, so **speed over poli
 - [ ] Record the collector ID in `CLAUDE.md`
 
 **T0 — by 13:00**
-- [ ] `scrape.py` — run collector, normalize to the §6 schema, write SQLite
+- [ ] `brightdata/scrape.py` — run collector, normalize to the §6 schema, write SQLite
 - [ ] One table. No ORM, no migrations.
 - [ ] `board.html` — static, reads from a JSON dump. No build step, no framework.
-- [ ] `score.py` — flag reproducible papers. **Heuristic first** (keywords:
+- [ ] `brightdata/score.py` — flag reproducible papers. **Heuristic first** (keywords:
       algorithm, we propose, toy, synthetic, complexity bound). LLM call only if
       time allows.
 - [ ] `make scrape` works end to end from clean checkout

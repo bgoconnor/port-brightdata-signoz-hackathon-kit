@@ -3,8 +3,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from score import score_paper, score_records
-from scrape import extract_records, normalize_record, write_sqlite
+from brightdata.score import score_paper, score_records
+from brightdata.scrape import extract_records, normalize_record, write_sqlite
 
 
 class PipelineTests(unittest.TestCase):
