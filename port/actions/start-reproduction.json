@@ -1,0 +1,59 @@
+{
+  "identifier": "start_reproduction",
+  "title": "Start reproduction",
+  "icon": "Experiment",
+  "description": "Open a claim-driven reproduction request for this paper. Execution is dispatched separately through the Kubernetes operator boundary.",
+  "trigger": {
+    "type": "self-service",
+    "operation": "DAY-2",
+    "blueprintIdentifier": "paper",
+    "userInputs": {
+      "properties": {
+        "scope": {
+          "title": "Target scope",
+          "description": "The intended reproduction scope; the feasibility stage may narrow it with an explicit explanation.",
+          "type": "string",
+          "enum": ["full_claim", "partial_claim", "mechanism_demo"],
+          "default": "partial_claim"
+        },
+        "claim_hint": {
+          "title": "Claim hint (optional)",
+          "description": "Optional guidance for claim selection. This is not treated as the paper's verified claim.",
+          "type": "string"
+        }
+      },
+      "required": ["scope"],
+      "order": ["scope", "claim_hint"]
+    }
+  },
+  "invocationMethod": {
+    "type": "UPSERT_ENTITY",
+    "blueprintIdentifier": "reproduction",
+    "mapping": {
+      "identifier": "{{ .entity.identifier + \"-\" + .run.id }}",
+      "title": "{{ \"Reproduction · \" + .entity.title }}",
+      "properties": {
+        "factory_status": "assessing",
+        "run_status": "pending",
+        "scope": "{{ .inputs.scope }}",
+        "outcome": "pending",
+        "retry_count": 0,
+        "attempt_number": 1,
+        "port_run_id": "{{ .run.id }}",
+        "feasibility_notes": "{{ if (.inputs.claim_hint // \"\") == \"\" then \"Awaiting full-text claim selection and feasibility assessment.\" else \"Claim-selection hint: \" + .inputs.claim_hint end }}",
+        "execution_request": {
+          "contract_version": "v1",
+          "state": "not_ready",
+          "reproduction_identifier": "{{ .entity.identifier + \"-\" + .run.id }}",
+          "paper_identifier": "{{ .entity.identifier }}",
+          "port_run_id": "{{ .run.id }}",
+          "attempt_number": 1,
+          "requested_scope": "{{ .inputs.scope }}",
+          "claim_hint": "{{ .inputs.claim_hint // \"\" }}"
+        }
+      },
+      "relations": {"paper": "{{ .entity.identifier }}"}
+    }
+  },
+  "requiredApproval": false
+}
