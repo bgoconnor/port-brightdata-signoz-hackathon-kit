@@ -134,7 +134,7 @@ them without telling the other two.**
 
 ---
 
-### BEN — Bright Data + pipeline + app
+### BEN — Bright Data + pipeline + app + Port workflows
 
 You own the spine. Everyone else is blocked until T0 lands, so **speed over polish.**
 
@@ -162,12 +162,29 @@ You own the spine. Everyone else is blocked until T0 lands, so **speed over poli
 **Deliverable to the team by 13:00:** a populated SQLite DB, `data/papers.json`, and
 a board that renders.
 
+**T1 — Port factory ownership transferred to Ben**
+
+- [ ] **Workflow A:** flagged paper → agent writes repro → **execute it** →
+      retry failures (max 2) → Review step → approve
+- [ ] The rejection path. Show a failed run being rejected and re-prompted. **This
+      is the most important single thing in the demo.**
+- [ ] **Workflow 0 (Loop 0):** change request against the board Service → agent
+      implements → Review → approve. Run one real change: "add reproduction status
+      column to the board."
+- [ ] **Workflow B, only after Loop A is green:** accept the SigNoz webhook and
+      trigger the reviewed failure-response path.
+
+Ben owns the live Port workflow definitions and their end-to-end verification.
+Gracelyn's existing Workflow A and Workflow B definitions are the starting point;
+preserve her completed work and extend it rather than replacing it blindly.
+
 ---
 
-### GRACELYN — Port
+### GRACELYN — Port context + operator experience
 
-You own the thing that's actually being judged. Mauritius said it plainly: he will
-not look at the app.
+You own the Port context lake, catalog, and operator experience. Port workflow
+implementation transferred to Ben after the initial Workflow A and Workflow B
+scaffolds were published.
 
 **Now**
 - [ ] Port signup (Gmail restriction is lifted today — if it fails, find Mauritius)
@@ -181,21 +198,10 @@ not look at the app.
 - [ ] Blueprint: `Reproduction` — paper ref, status, run result, file path, retries
 - [ ] Blueprint: `Service` — for the paper board itself (Loop 0)
 - [ ] Seed entities from `data/papers.json` (don't wait for live scraping)
-- [ ] **Workflow A:** flagged paper → agent writes repro → **execute it** →
-      Review step → approve
-- [ ] The rejection path. Show a failed run being rejected and re-prompted. **This
-      is the most important single thing in the demo** — it's what separates us from
-      a wrapper that prints LLM output.
 - [ ] Dashboard: papers ingested, reproductions attempted, pass rate, pending reviews
-- [ ] **Workflow 0 (Loop 0):** change request against the board Service → agent
-      implements → Review → approve. Run one real change: "add reproduction status
-      column to the board."
 
-**T2**
-- [ ] Workflow B: accept the SigNoz webhook, trigger diagnose-and-patch
-
-**Deliverable:** a Port dashboard a stranger can read, and two workflows that run
-live.
+**Deliverable:** a Port catalog and dashboard a stranger can read, plus a clean
+handoff of existing workflow context to Ben.
 
 ---
 
@@ -270,10 +276,10 @@ someone else's work.
 
 - **Ben publishes `data/papers.json`** as soon as he has anything, even hand-faked.
   Gracelyn and Hugh both work off this file, not off the live scraper.
-- **Hugh's alert POSTs to a Port webhook URL** that Gracelyn provides. Direction
+- **Hugh's alert POSTs to a Port webhook URL** that Ben provides. Direction
   matters: SigNoz runs on localhost and Port cannot reach into it. Traffic must flow
   SigNoz → Port.
-- **Reproductions land in `reproductions/{arxiv_id}.py`.** Gracelyn's workflow writes
+- **Reproductions land in `reproductions/{arxiv_id}.py`.** Ben's workflow writes
   there; Ben's board reads the directory listing for status.
 
 **Nobody blocks on live data.** Fake the interface, integrate at 15:00.
@@ -324,5 +330,5 @@ system or distort Loop B to manufacture a Bright Data failure.
 
 - **Does a reproduction get committed as a real GitHub PR, or written to
   `reproductions/` and surfaced in Port?** PR is more impressive, costs ~30 min and
-  a token. **Gracelyn's call — it changes what Workflow A builds.**
+  a token. **Ben's call — it changes what Workflow A builds.**
 - Scoring: heuristic vs. LLM call. Start heuristic.
