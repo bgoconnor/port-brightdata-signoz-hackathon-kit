@@ -76,8 +76,8 @@ Before stopping or asking another person to continue:
 
 | Person | Current track | Branch convention |
 |---|---|---|
-| Ben | Bright Data ingestion and coordination framework | `ben/*` |
-| Gracelyn | Port context and operator experience | `gracelyn/*` |
+| Ben | Bright Data ingestion, coordination framework, and Port workflows | `ben/*` |
+| Gracelyn | Port context lake, catalog, and operator experience | `gracelyn/*` |
 | Hugh | Kubernetes, deployment, and SigNoz | `hugh/*` |
 
 All three people are members of Port team `default_team`, titled **Paper Factory

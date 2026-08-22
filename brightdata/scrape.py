@@ -54,6 +54,9 @@ def normalize_record(raw: dict[str, Any], scraped_at: str) -> dict[str, Any]:
         "abstract": str(raw.get("abstract") or raw.get("summary") or "").strip(),
         "subjects": string_list(raw.get("subjects") or raw.get("categories")),
         "scraped_at": scraped_at,
+        "abs_url": f"https://arxiv.org/abs/{arxiv_id}",
+        "html_url": f"https://arxiv.org/html/{arxiv_id}",
+        "pdf_url": f"https://arxiv.org/pdf/{arxiv_id}",
     }
     missing = [field for field in REQUIRED_FIELDS if not paper[field]]
     if missing:
