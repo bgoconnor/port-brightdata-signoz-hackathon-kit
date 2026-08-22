@@ -1,2 +1,8 @@
 Django==5.2.17
+opentelemetry-distro==0.65b0
+opentelemetry-exporter-otlp==1.44.0
+opentelemetry-instrumentation-django==0.65b0
+opentelemetry-instrumentation-logging==0.65b0
+opentelemetry-instrumentation-psycopg==0.65b0
+opentelemetry-instrumentation-system-metrics==0.65b0
 psycopg[binary]==3.2.10

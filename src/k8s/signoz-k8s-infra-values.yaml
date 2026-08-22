@@ -1,0 +1,27 @@
+# Collect cluster metrics and only this project's pod logs into local SigNoz.
+global:
+  cloud: other
+  clusterName: minikube
+  deploymentEnvironment: local
+
+otelCollectorEndpoint: http://signoz-otel-collector.signoz.svc.cluster.local:4318
+otelInsecure: true
+
+presets:
+  otlphttpExporter:
+    enabled: true
+  logsCollection:
+    enabled: true
+    startAt: end
+    whitelist:
+      enabled: true
+      signozLogs: false
+      namespaces:
+        - hackathon
+      pods: []
+      containers: []
+      additionalInclude: []
+  k8sEvents:
+    enabled: true
+    namespaces:
+      - hackathon

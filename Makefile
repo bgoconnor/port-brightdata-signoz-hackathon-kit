@@ -9,6 +9,9 @@ fixture:
 
 scrape:
 	@test -n "$(COLLECTOR_ID)" || (echo "Usage: make scrape COLLECTOR_ID=c_..." && exit 2)
+	@set -a; \
+	if [ -f .env ]; then . ./.env; fi; \
+	set +a; \
 	$(PYTHON) -m brightdata.scrape --collector-id "$(COLLECTOR_ID)"
 
 enrich:
