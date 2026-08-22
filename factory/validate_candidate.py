@@ -24,9 +24,6 @@ class PolicyError(ValueError):
 
 
 def validate_source(source: str) -> None:
-    if len(source.splitlines()) > 100:
-        raise PolicyError("candidate exceeds the 100-line limit")
-
     try:
         tree = ast.parse(source)
     except SyntaxError as error:
