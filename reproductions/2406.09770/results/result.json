@@ -1,0 +1,19 @@
+{
+  "claim": "router counts match Table 10 and are independent of backbone width",
+  "reported": {
+    "2": 264,
+    "3": 540,
+    "8": 3360
+  },
+  "observed_width_768": {
+    "2": 264,
+    "3": 540,
+    "8": 3360
+  },
+  "observed_width_3072": {
+    "2": 264,
+    "3": 540,
+    "8": 3360
+  },
+  "passed": true
+}
