@@ -6,15 +6,15 @@ not authoritative state.
 
 ## Shared model
 
-Create two small Port blueprints in addition to the product blueprints already in
-the catalog:
+Two coordination blueprints are live in Port in addition to the product
+blueprints already in the catalog:
 
 - **Work Item**: a bounded unit of work with one assignee, status, track, branch,
   handoff summary, verification evidence, and blocker.
 - **Decision**: a product or technical choice with an owner, status, outcome,
   rationale, and the contract or subsystem it affects.
 
-Both blueprints should use Port's built-in `$team` ownership. Do not create a
+Both blueprints use Port's built-in `$team` ownership. Do not create a
 second custom team relation. A Work Item may depend on other Work Items, and both
 types may optionally relate to the existing `service` blueprint.
 
@@ -57,6 +57,9 @@ Every agent, on every machine:
 4. Select or create one bounded item and set it to `in_progress` with its branch.
 5. Read related Decisions before changing a shared contract.
 
+The repository root `AGENTS.md` makes this startup and handoff loop mandatory for
+agents that automatically load repository instructions.
+
 ## Agent handoff
 
 Before stopping or asking another person to continue:
@@ -76,6 +79,9 @@ Before stopping or asking another person to continue:
 | Ben | Bright Data ingestion and coordination framework | `ben/*` |
 | Gracelyn | Port context and operator experience | `gracelyn/*` |
 | Hugh | Kubernetes, deployment, and SigNoz | `hugh/*` |
+
+All three people are members of Port team `default_team`, titled **Paper Factory
+Team**.
 
 The intended integration branch is `deploy`; it does not exist remotely yet. Do
 not invent or push it until Hugh's branch/context documentation confirms its
