@@ -1,0 +1,4 @@
+interface:
+  display_name: "Hackathon Platform Workflow"
+  short_description: "Coordinate Port, Bright Data, and SigNoz reliably"
+  default_prompt: "Use $hackathon-platform-workflow to plan or implement a workflow that combines Port, Bright Data, and SigNoz."
