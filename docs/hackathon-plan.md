@@ -1,5 +1,9 @@
 # Hackathon implementation plan
 
+> **Status: SUPERSEDED BASELINE.** Use the root [`SPEC.md`](../SPEC.md) for current
+> implementation scope, ownership, contracts, and priorities. This generic plan is
+> retained as design background only.
+
 ## Thin vertical slice
 
 1. Collect one authorized public source with Bright Data.

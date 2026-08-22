@@ -1,5 +1,9 @@
 # Hackathon context
 
+> **Status: BACKGROUND / PRE-KICKOFF RESEARCH.** The root [`SPEC.md`](../SPEC.md)
+> is authoritative. This document preserves earlier assumptions and architecture;
+> do not use it to override the current spec.
+
 Reference doc for this repo. Written before kickoff. Contains the event constraints,
 the sponsor tool realities we researched, the architecture we're building toward,
 and the decisions still open.

@@ -1,15 +1,10 @@
 # SPEC v2 — Paper Factory
 
-> **Status: CURRENT AND AUTHORITATIVE**
->
-> Owners should read §1–3, then go directly to their track in §5. Historical source
-> versions are indexed in [`docs/specs/README.md`](docs/specs/README.md).
+Team spec, parallelized. Read §1–3, then go straight to your own track in §5.
 
 Changes from v1: added the factory-built-the-app loop (§3, Loop 0), split work into
 three independent owner tracks with explicit contracts between them, and folded in
-the workshop findings. This canonical edition also clarifies that Bright Data's
-self-healing is a capability of the acquisition layer, not a repair loop we need to
-rebuild.
+the workshop findings.
 
 ---
 
@@ -30,8 +25,8 @@ agent that diagnoses from the trace alone and patches it, human approves.
 **The app is a paper board. The submission is the factory.**
 
 Theme is *zero downtime* — survive when something breaks. Kunal's examples: UI
-changes, APIs break, data in the wrong format. Ours is the third. In the demo,
-describe Loop B honestly as a controlled simulation of malformed upstream data.
+changes, APIs break, data in the wrong format. Ours is the third. **Narrate it as
+upstream data caused this**, never as "we broke our own code."
 
 ---
 
@@ -43,9 +38,8 @@ describe Loop B honestly as a controlled simulation of malformed upstream data.
   He also said: don't read docs, hook Port MCP to your agent and ask it to build you
   a software factory — **then go look at what it did.**
 - **Bright Data (Adam):** the Bright Data team are judges. Public data only; it will
-  not authenticate against anything. Scraper Studio supplies self-healing scrapers,
-  giving the application a more reliable acquisition contract than hand-written,
-  brittle HTML rules. We rely on that capability; we do not rebuild its healing loop.
+  not authenticate against anything. Scraper Studio gives self-healing scrapers —
+  contrast with Beautiful Soup, where you hand-write brittle HTML rules.
 - **SigNoz (Kevin):** *"we don't expect you guys to be able to use our platform at
   all."* His actual advice: feed the SigNoz docs to your coding agent and let it
   wire the instrumentation. Take that advice literally.
@@ -280,18 +274,17 @@ someone else's work.
 
 ---
 
-## 7. Demo evidence
+## 7. The four required shots
 
-Video is 3–5 minutes. The locally recorded submission brief calls for the terminal
-scraping workflow, Port dashboard, live SigNoz monitoring, and Bright Data
-auto-repair. Reconfirm the exact required shots at kickoff.
+Video is 3–5 minutes. Required: terminal scraping workflow, Port dashboard, live
+SigNoz monitoring, Bright Data auto-repair.
 
 **If it doesn't appear in a shot, it's out of scope.** Cut rule for the whole day.
 
-Bright Data self-healing is part of the acquisition service, not Loop B. If a
-self-healing shot remains required, demonstrate or explain the native capability in
-a short, bounded segment using the official workflow. Do not build a parallel repair
-system or distort Loop B to manufacture a Bright Data failure.
+**Known gap:** the auto-repair requirement fits our design worst — our break is in
+the pipeline, not the scraper. Mitigation: Ben runs one `brightdata scraper heal`
+cycle as a separate short shot. **Budget 15 minutes, no more.** Heal takes 5–25
+minutes to complete, so kick it off early and cut to the finished result.
 
 ---
 
