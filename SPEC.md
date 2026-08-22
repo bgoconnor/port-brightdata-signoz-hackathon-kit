@@ -80,11 +80,11 @@ to Loop A on screen.
 ### Loop A — Paper to reproduction (headline)
 
 ```
-Our app triggers the hosted Bright Data discovery collector for arXiv cs.AI /new
+Our app triggers one hosted Bright Data collector for arXiv cs.AI /new
+  -> collector follows up to 3 paper HTML links and returns complete records
   -> retrieve completed Bright Data dataset -> normalize -> PostgreSQL -> paper board
   -> scoring step flags papers with a potentially testable claim
-  -> app triggers hosted Bright Data full-text collector for selected paper
-  -> retrieve completed dataset -> persist full text + provenance in PostgreSQL
+  -> selected paper already has full text + provenance in PostgreSQL
   -> upsert Paper entity in Port
   -> Port workflow:
        extract one explicit claim and its reported metric

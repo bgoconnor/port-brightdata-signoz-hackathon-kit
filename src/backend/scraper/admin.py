@@ -17,9 +17,9 @@ class PaperAdmin(admin.ModelAdmin):
 @admin.register(ScrapeRun)
 class ScrapeRunAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'kind', 'paper', 'bright_job_id', 'status', 'bright_status',
+        'id', 'bright_job_id', 'status', 'bright_status',
         'records_received', 'records_written', 'failure_count', 'created_at',
     )
-    list_filter = ('kind', 'status', 'bright_status')
+    list_filter = ('status', 'bright_status')
     search_fields = ('bright_job_id', 'collector_id', 'target_url')
     readonly_fields = ('created_at', 'updated_at')

@@ -37,7 +37,7 @@ Open `http://localhost:8000/board.html`. For live acquisition through the existi
 Bright Data collector:
 
 ```bash
-make scrape COLLECTOR_ID=c_mt4qssufwcgso7ees
+make scrape
 ```
 
 These root commands publish bootstrap fixtures for offline development. The

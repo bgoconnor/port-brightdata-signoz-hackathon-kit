@@ -1,25 +1,14 @@
 PYTHON ?= python3
-COLLECTOR_ID ?=
-ARXIV_ID ?=
-
-.PHONY: fixture scrape enrich serve test clean
+.PHONY: fixture scrape serve test clean
 
 fixture:
 	$(PYTHON) -m brightdata.scrape --input brightdata/fixtures/brightdata-papers.json
 
 scrape:
-	@test -n "$(COLLECTOR_ID)" || (echo "Usage: make scrape COLLECTOR_ID=c_..." && exit 2)
 	@set -a; \
 	if [ -f .env ]; then . ./.env; fi; \
 	set +a; \
-	$(PYTHON) -m brightdata.scrape --collector-id "$(COLLECTOR_ID)"
-
-enrich:
-	@test -n "$(ARXIV_ID)" || (echo "Usage: make enrich ARXIV_ID=2608.12345" && exit 2)
-	@set -a; \
-	if [ -f .env ]; then . ./.env; fi; \
-	set +a; \
-	cd src/backend && $(PYTHON) manage.py enrich_paper "$(ARXIV_ID)"
+	cd src/backend && $(PYTHON) manage.py scrape_papers
 
 serve: fixture
 	$(PYTHON) -m http.server 8000
