@@ -1,15 +1,18 @@
+import json
+
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from .models import Paper, ScrapeRun
-from .services import control_scrape, refresh_scrape, start_scrape
+from .services import BrightDataError, control_scrape, refresh_scrape, start_scrape
 
 
 def _serialize_run(run: ScrapeRun) -> dict:
     return {
         'id': run.id,
+        'source': run.source,
         'collector_id': run.collector_id,
         'target_url': run.target_url,
         'bright_job_id': run.bright_job_id,
@@ -32,15 +35,22 @@ def papers(request):
     queryset = Paper.objects.order_by('-score', 'title')
     data = [
         {
+            'paper_id': paper.paper_id,
+            'source': paper.source,
+            'source_id': paper.source_id,
             'arxiv_id': paper.arxiv_id,
             'title': paper.title,
             'authors': paper.authors,
             'abstract': paper.abstract,
             'subjects': paper.subjects,
+            'published_at': paper.published_at.isoformat() if paper.published_at else None,
+            'pdf_url': paper.pdf_url,
             'score': paper.score,
             'reproducible': paper.reproducible,
             'scraped_at': paper.scraped_at.isoformat(),
-            'url': f'https://arxiv.org/abs/{paper.arxiv_id}',
+            'url': paper.full_text_source_url or (
+                f'https://arxiv.org/abs/{paper.arxiv_id}' if paper.arxiv_id else None
+            ),
             'enriched': bool(paper.full_text),
             'full_text_source_url': paper.full_text_source_url,
             'full_text_sha256': paper.full_text_sha256,
@@ -57,7 +67,14 @@ def papers(request):
 @require_http_methods(['GET', 'POST'])
 def scrape_runs(request):
     if request.method == 'POST':
-        run = start_scrape()
+        try:
+            payload = json.loads(request.body or b'{}')
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Request body must be valid JSON'}, status=400)
+        try:
+            run = start_scrape(str(payload.get('source') or 'arxiv'))
+        except BrightDataError as error:
+            return JsonResponse({'error': str(error)}, status=400)
         status = 201 if run.status != ScrapeRun.Status.FAILED else 502
         return JsonResponse({'run': _serialize_run(run)}, status=status)
     runs = ScrapeRun.objects.all()[:20]

@@ -8,8 +8,24 @@ This directory owns the Bright Data-specific portion of the Paper Factory:
 - `tests/` verifies extraction, normalization, scoring, and SQLite publication.
 
 Run `make fixture` for offline development, `make scrape` for the real Django →
-Bright Data → PostgreSQL path, and `make test` for bootstrap tests. The runtime
-collector is `c_mt4y2std23j5floxrv`, bounded to up to three complete papers.
+Bright Data → PostgreSQL path, and `make test` for bootstrap tests.
+
+## Hosted collectors
+
+Each publisher has its own hosted collector because the indexes and publication
+pages have different layouts. All collectors return the same normalized fields:
+`source`, `source_id`, `title`, `authors`, `abstract`, `subjects`, `published_at`,
+`source_url`, `pdf_url`, and `full_text`.
+
+| Source | Target | Collector environment variable |
+|---|---|---|
+| arXiv | `https://arxiv.org/list/cs.AI/new` | `BRIGHTDATA_COLLECTOR_ID` |
+| Anthropic | `https://www.anthropic.com/research` | `BRIGHTDATA_ANTHROPIC_COLLECTOR_ID` |
+| OpenAI | `https://openai.com/research/index/` | `BRIGHTDATA_OPENAI_COLLECTOR_ID` |
+
+Trigger a source through Django with `python manage.py scrape_papers --source
+anthropic` (or `arxiv` / `openai`). The board sends the same source value to
+`POST /api/scrape-runs/` as JSON.
 
 Generated fixture data remains in root `data/`; it is not runtime state.
 

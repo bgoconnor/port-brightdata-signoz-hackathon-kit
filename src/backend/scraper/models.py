@@ -4,11 +4,16 @@ from django.db import models
 
 
 class Paper(models.Model):
-    arxiv_id = models.CharField(max_length=32, primary_key=True)
+    paper_id = models.CharField(max_length=300, primary_key=True)
+    source = models.CharField(max_length=32, default='arxiv')
+    source_id = models.CharField(max_length=255)
+    arxiv_id = models.CharField(max_length=32, null=True, blank=True, unique=True)
     title = models.TextField()
     authors = models.JSONField()
     abstract = models.TextField()
     subjects = models.JSONField()
+    published_at = models.DateTimeField(null=True, blank=True)
+    pdf_url = models.URLField(max_length=500, blank=True)
     score = models.FloatField()
     reproducible = models.BooleanField()
     scraped_at = models.DateTimeField()
@@ -17,6 +22,11 @@ class Paper(models.Model):
     full_text_sha256 = models.CharField(max_length=64, blank=True)
     full_text_acquired_at = models.DateTimeField(null=True, blank=True)
     full_text_collection_id = models.CharField(max_length=64, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=('source', 'source_id'), name='unique_paper_source_id'),
+        ]
 
 
 class ScrapeRun(models.Model):
@@ -29,6 +39,7 @@ class ScrapeRun(models.Model):
         FAILED = 'failed', 'Failed'
         CANCELED = 'canceled', 'Canceled'
 
+    source = models.CharField(max_length=32, default='arxiv')
     collector_id = models.CharField(max_length=64)
     target_url = models.URLField(max_length=500)
     bright_job_id = models.CharField(max_length=64, unique=True, null=True, blank=True)

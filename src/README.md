@@ -17,10 +17,10 @@ resources when your current profile is smaller:
 minikube start --memory=8g --cpus=4 --disk-size=30g
 ```
 
-The root `.env` must contain `BRIGHTDATA_API_KEY` and
-`BRIGHTDATA_COLLECTOR_ID=c_mt4y2std23j5floxrv`. This single hosted scraper
-returns up to three complete papers per run. The deploy script loads both values
-and creates or updates the `hackathon-brightdata` Kubernetes Secret.
+The root `.env` must contain `BRIGHTDATA_API_KEY`, `BRIGHTDATA_COLLECTOR_ID`, and
+`BRIGHTDATA_ANTHROPIC_COLLECTOR_ID`. `BRIGHTDATA_OPENAI_COLLECTOR_ID` is optional
+until a healthy OpenAI collector is configured. The deploy script loads them and
+creates or updates the `hackathon-brightdata` Kubernetes Secret.
 
 ## Start the project
 
@@ -119,6 +119,8 @@ For example:
 ```bash
 kubectl -n hackathon exec deployment/hackathon-backend -- python manage.py check
 kubectl -n hackathon exec deployment/hackathon-backend -- python manage.py scrape_papers
+kubectl -n hackathon exec deployment/hackathon-backend -- python manage.py scrape_papers --source anthropic
+kubectl -n hackathon exec deployment/hackathon-backend -- python manage.py scrape_papers --source openai
 kubectl -n hackathon exec -it deployment/hackathon-backend -- python manage.py createsuperuser
 ```
 
