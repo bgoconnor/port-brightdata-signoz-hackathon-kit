@@ -80,10 +80,11 @@ to Loop A on screen.
 ### Loop A — Paper to reproduction (headline)
 
 ```
-Bright Data scrapes arXiv cs.AI /new
-  -> normalize discovery metadata -> SQLite -> paper board
+Our app triggers one hosted Bright Data collector for arXiv cs.AI /new
+  -> collector follows up to 3 paper HTML links and returns complete records
+  -> retrieve completed Bright Data dataset -> normalize -> PostgreSQL -> paper board
   -> scoring step flags papers with a potentially testable claim
-  -> enrichment fetches full paper + linked public code/data
+  -> selected paper already has full text + provenance in PostgreSQL
   -> upsert Paper entity in Port
   -> Port workflow:
        extract one explicit claim and its reported metric
@@ -169,21 +170,23 @@ You own the spine. Everyone else is blocked until T0 lands, so **speed over poli
 - [ ] Record the collector ID in `CLAUDE.md`
 
 **T0 — by 13:00**
-- [ ] `brightdata/scrape.py` — run collector, normalize to the §6 schema, write SQLite
-- [ ] One table. No ORM, no migrations.
+- [x] Django Bright Data service — trigger the hosted collector, normalize the §6
+      schema, and write PostgreSQL transactionally
+- [x] Track Bright Data collection IDs and lifecycle in `ScrapeRun`
 - [ ] `board.html` — static, reads from a JSON dump. No build step, no framework.
 - [ ] `brightdata/score.py` — flag reproducible papers. **Heuristic first** (keywords:
       algorithm, we propose, toy, synthetic, complexity bound). LLM call only if
       time allows.
 - [ ] `make scrape` works end to end from clean checkout
-- [ ] **Publish `data/papers.json`** — this is Gracelyn's and Hugh's unblock
+- [x] Publish `data/papers.json` as a bootstrap fixture for parallel team work;
+      it is not runtime state
 
 **T2 — only if Loop A is green**
 - [ ] `make break` — untracked patch introducing the null-arithmetic bug
 - [ ] Validation in the pipeline that detects partial writes and fails loudly
 
-**Deliverable to the team by 13:00:** a populated SQLite DB, `data/papers.json`, and
-a board that renders.
+**Deliverable to the team by 13:00:** PostgreSQL-backed ingestion, a bootstrap
+`data/papers.json` fixture, and a board that renders.
 
 **T1 — Port factory ownership transferred to Ben**
 
@@ -222,7 +225,7 @@ scaffolds were published.
 - [ ] Blueprint: `Reproduction` — paper ref, selected claim, scope, provenance,
       reported/observed values, comparison rule, outcome, evidence path, retries
 - [ ] Blueprint: `Service` — for the paper board itself (Loop 0)
-- [ ] Seed entities from `data/papers.json` (don't wait for live scraping)
+- [ ] Seed entities from `data/papers.json` for setup only (don't wait for live scraping)
 - [ ] Dashboard: papers ingested, reproductions attempted, pass rate, pending reviews
 
 **Deliverable:** a Port catalog and dashboard a stranger can read, plus a clean
@@ -299,8 +302,9 @@ someone else's work.
 }
 ```
 
-- **Ben publishes `data/papers.json`** as soon as he has anything, even hand-faked.
-  Gracelyn and Hugh both work off this file, not off the live scraper.
+- **`data/papers.json` is a bootstrap fixture only.** Runtime paper, full-text,
+  provenance, and collection state is canonical in PostgreSQL. Port consumes
+  entity metadata/status; it is not the raw paper-content store.
 - **Hugh's alert POSTs to a Port webhook URL** that Ben provides. Direction
   matters: SigNoz runs on localhost and Port cannot reach into it. Traffic must flow
   SigNoz → Port.

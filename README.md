@@ -37,17 +37,18 @@ Open `http://localhost:8000/board.html`. For live acquisition through the existi
 Bright Data collector:
 
 ```bash
-make scrape COLLECTOR_ID=c_mt4qssufwcgso7ees
+make scrape
 ```
 
-Both paths publish the stable team contract to `data/papers.json` and SQLite to
-`data/papers.db`.
+These root commands publish bootstrap fixtures for offline development. The
+running application triggers hosted Bright Data collectors and stores canonical
+paper, full-text, provenance, and collection state in PostgreSQL.
 
 ## Repository contents
 
 - `SPEC.md` — current, authoritative product and implementation specification.
 - `brightdata/` — Bright Data acquisition, scoring, fixture, and pipeline tests.
-- `data/papers.json` — shared normalized paper contract consumed by the application and integrations.
+- `data/papers.json` — bootstrap fixture only; never runtime source of truth.
 - `docs/specs/` — immutable source drafts and superseded specification history.
 - `docs/product-field-guide.md` — concepts, product boundaries, and failure modes.
 - `docs/setup.md` — agent packages, MCP setup, credentials, and smoke tests.
