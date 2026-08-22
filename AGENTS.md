@@ -49,5 +49,9 @@ Port team identifier: `default_team` (title: **Paper Factory Team**).
 - Gracelyn: `newhouse.oconnor@gmail.com`, branches `gracelyn/*`
 - Hugh: `hugh.hoford@gmail.com`, branches `hugh/*`
 
+Current Port ownership: Ben owns live workflow implementation and verification;
+Gracelyn owns the context lake, catalog, and operator experience. Preserve and
+extend Gracelyn's existing workflows rather than recreating them.
+
 See `docs/team-coordination.md` for the Port field definitions and complete
 workflow. See `docs/port-mcp-setup.md` for connection setup.

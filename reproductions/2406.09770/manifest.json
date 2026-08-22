@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "arxiv_id": "2406.09770",
+  "paper_version": "2",
+  "selected_claim": "For the MLP-only PWEMoE configuration on CLIP-ViT-B/32, the trainable router parameter counts in Table 10 are 264, 540, and 3.36K for 2, 3, and 8 tasks respectively, and the count is independent of backbone width.",
+  "scope": "partial_claim",
+  "limitations": [
+    "Reproduces the architectural parameter-count claim, not accuracy, hypervolume, memory, or wall-time benchmarks.",
+    "Uses the router dimensions stated in Section 4 and the 12 CLIP-ViT-B/32 MLP blocks implied by the reported counts."
+  ],
+  "sources": [
+    {
+      "kind": "paper",
+      "url": "https://arxiv.org/html/2406.09770",
+      "version": "v2",
+      "sha256": "569a843b5753d3e161ea801b468019f6aa0dd3d30331ac5edc6a32a142d7732d"
+    }
+  ],
+  "environment": {
+    "container_image": "python:3.12-slim",
+    "dependency_lock": "requirements.lock",
+    "hardware": "CPU only",
+    "network_during_execution": false
+  },
+  "experiment": {
+    "command": ["python", "-I", "src/reproduce.py"],
+    "timeout_seconds": 30,
+    "random_seeds": [],
+    "result_file": "results/result.json"
+  },
+  "reported_result": {
+    "metric": "trainable_router_parameters",
+    "value": "T=2:264,T=3:540,T=8:3360",
+    "unit": "parameters",
+    "source_location": "Table 10 and Remark 4.2"
+  },
+  "comparison": {
+    "method": "exact",
+    "tolerance": 0,
+    "rationale": "Parameter counts are deterministic integer consequences of the published router dimensions."
+  }
+}

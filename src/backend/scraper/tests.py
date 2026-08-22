@@ -13,7 +13,6 @@ BRIGHT_ENV = {
     'BRIGHTDATA_COLLECTOR_ID': 'c_test',
 }
 
-
 class ScrapeLifecycleTests(TestCase):
     @patch.dict(os.environ, BRIGHT_ENV)
     @patch('scraper.services._request_json')
@@ -33,6 +32,8 @@ class ScrapeLifecycleTests(TestCase):
                 'authors': ['Ada Lovelace'],
                 'abstract': 'A synthetic experiment with a complexity result.',
                 'subjects': ['cs.AI'],
+                'source_url': 'https://arxiv.org/abs/2608.00001',
+                'full_text': '# Paper\n' + ('Methods and results. ' * 80),
             }],
         ]
 
@@ -43,6 +44,9 @@ class ScrapeLifecycleTests(TestCase):
         paper = Paper.objects.get(arxiv_id='2608.00001')
         self.assertTrue(paper.reproducible)
         self.assertEqual(paper.authors, ['Ada Lovelace'])
+        self.assertGreater(len(paper.full_text), 1000)
+        self.assertEqual(paper.full_text_collection_id, 'j_test')
+        self.assertEqual(len(paper.full_text_sha256), 64)
 
     @patch.dict(os.environ, BRIGHT_ENV)
     @patch('scraper.services._request_json')

@@ -1,4 +1,3 @@
-import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -26,6 +25,7 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(paper["authors"], ["Ada", "Grace"])
         self.assertEqual(paper["arxiv_id"], "2608.1")
         self.assertEqual(paper["subjects"], ["cs.AI", "cs.LG"])
+        self.assertEqual(paper["html_url"], "https://arxiv.org/html/2608.1")
 
     def test_rejects_incomplete_paper(self):
         with self.assertRaisesRegex(ValueError, "missing required fields"):
@@ -46,7 +46,6 @@ class PipelineTests(unittest.TestCase):
             path = Path(directory) / "papers.db"
             write_sqlite([paper], path)
             self.assertTrue(path.exists())
-
 
 if __name__ == "__main__":
     unittest.main()

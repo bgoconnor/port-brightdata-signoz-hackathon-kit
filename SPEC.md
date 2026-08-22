@@ -1,27 +1,31 @@
-# SPEC v2 — Paper Factory
+# SPEC v3 — Evidence-Backed Paper Factory
 
 > **Status: CURRENT AND AUTHORITATIVE**
 >
 > Owners should read §1–3, then go directly to their track in §5. Historical source
 > versions are indexed in [`docs/specs/README.md`](docs/specs/README.md).
 
-Changes from v1: added the factory-built-the-app loop (§3, Loop 0), split work into
-three independent owner tracks with explicit contracts between them, and folded in
-the workshop findings. This canonical edition also clarifies that Bright Data's
-self-healing is a capability of the acquisition layer, not a repair loop we need to
-rebuild.
+Changes from v2: replaces the abstract-to-single-file mechanism demo with a
+claim-driven reproduction pipeline. Discovery metadata is no longer treated as
+sufficient evidence. A successful run must identify a claim, acquire the paper and
+available artifacts, execute a declared experiment, and compare observed evidence
+with the paper's stated result. Mechanism demos remain useful but are labeled as
+such and never counted as reproductions.
 
 ---
 
 ## 1. What we're building
 
-**A factory that reads new AI papers and manufactures runnable code from the good
-ones.**
+**A factory that discovers new AI papers and produces inspectable, evidence-backed
+reproduction attempts for feasible claims.**
 
-Scrape arXiv cs.AI new submissions. Score each paper for whether it has a
-reproducible core claim. High-scoring papers trigger a Port workflow where a coding
-agent writes a minimal executable illustration of the paper's central mechanism.
-**The code must actually run before a human is asked to approve it.**
+Scrape arXiv cs.AI new submissions for discovery. Score each paper for whether it
+contains a testable claim, then enrich selected candidates with full text, methods,
+claimed metrics, linked code, datasets, and environment information. Port governs
+a workflow that selects one claim, assesses feasibility, builds an experiment
+package, executes it, and compares observed results with a declared acceptance
+rule. **A passing process is not automatically a reproduced result.** The evidence
+must support the selected claim before a human is asked to approve that outcome.
 
 Second loop: we manufacture a bug in the processing pipeline — upstream data
 arriving in a shape the app didn't expect. SigNoz catches it, Port routes it to an
@@ -76,17 +80,23 @@ to Loop A on screen.
 ### Loop A — Paper to reproduction (headline)
 
 ```
-Bright Data scrapes arXiv cs.AI /new
-  -> normalize -> SQLite -> paper board (static HTML)
-  -> scoring step flags papers with a reproducible core claim
+Our app triggers one hosted Bright Data collector for arXiv cs.AI /new
+  -> collector follows up to 3 paper HTML links and returns complete records
+  -> retrieve completed Bright Data dataset -> normalize -> PostgreSQL -> paper board
+  -> scoring step flags papers with a potentially testable claim
+  -> selected paper already has full text + provenance in PostgreSQL
   -> upsert Paper entity in Port
   -> Port workflow:
-       agent reads abstract
-       -> writes ONE self-contained Python file
-       -> WORKFLOW EXECUTES IT
-            fails  -> reject, re-prompt with traceback (max 2 retries)
-            passes -> Review step, human approves
-  -> lands in reproductions/
+       extract one explicit claim and its reported metric
+       -> feasibility gate (reproduce / mechanism_demo / blocked)
+       -> generate an experiment manifest and versioned package
+       -> build a clean isolated environment
+       -> execute the declared experiment
+            infra/code failure -> repair from evidence (max 2 retries)
+            experiment completes -> compare observed vs. reported result
+       -> outcome: reproduced / not_reproduced / inconclusive / blocked
+       -> Review step: human approves the evidence and label
+  -> package + manifest + logs + metrics land in reproductions/{arxiv_id}/
   -> whole run traced in SigNoz
 ```
 
@@ -111,10 +121,24 @@ make break   (upstream record arrives in an unexpected shape)
 
 Do not renegotiate these during the build.
 
-**"Reproduction" means:** one self-contained Python file, under 100 lines, toy data
-generated in-file, runs in under 10 seconds, prints one number or writes one plot.
-It is **not** a replication of results — it's a *minimal executable illustration of
-the central mechanism*. We say exactly that on camera.
+**"Reproduction attempt" means:** an execution against one explicitly quoted or
+precisely paraphrased paper claim. The attempt records the paper version, source
+URLs, code/data provenance, environment, command, random seeds, reported value,
+observed value, comparison rule, logs, and artifacts. Its outcome is one of:
+`reproduced`, `not_reproduced`, `inconclusive`, or `blocked`. Only `reproduced`
+means the observed evidence met the predeclared comparison rule.
+
+**"Mechanism demo" means:** runnable code that illustrates an idea using synthetic
+or toy data but does not test a reported paper result. It is a useful factory output
+but is labeled `mechanism_demo` and is never included in the reproduction success
+rate.
+
+There is no source-line limit. Runtime, compute, dependency, network, and data
+budgets are declared per attempt and enforced by the runner. Generated code runs in
+an isolated environment without credentials. Network is disabled during execution;
+any permitted public dependencies or datasets are resolved and checksummed during a
+separate preparation stage. A workflow may stop honestly at `blocked` when required
+code, data, hardware, licenses, methodological detail, or budget is unavailable.
 
 **"The break" means:** a scraped field arrives empty where the transform does
 arithmetic. Throws mid-batch — some records written, some not. Partial success is
@@ -134,7 +158,7 @@ them without telling the other two.**
 
 ---
 
-### BEN — Bright Data + pipeline + app
+### BEN — Bright Data + pipeline + app + Port workflows
 
 You own the spine. Everyone else is blocked until T0 lands, so **speed over polish.**
 
@@ -146,28 +170,48 @@ You own the spine. Everyone else is blocked until T0 lands, so **speed over poli
 - [ ] Record the collector ID in `CLAUDE.md`
 
 **T0 — by 13:00**
-- [ ] `brightdata/scrape.py` — run collector, normalize to the §6 schema, write SQLite
-- [ ] One table. No ORM, no migrations.
+- [x] Django Bright Data service — trigger the hosted collector, normalize the §6
+      schema, and write PostgreSQL transactionally
+- [x] Track Bright Data collection IDs and lifecycle in `ScrapeRun`
 - [ ] `board.html` — static, reads from a JSON dump. No build step, no framework.
 - [ ] `brightdata/score.py` — flag reproducible papers. **Heuristic first** (keywords:
       algorithm, we propose, toy, synthetic, complexity bound). LLM call only if
       time allows.
 - [ ] `make scrape` works end to end from clean checkout
-- [ ] **Publish `data/papers.json`** — this is Gracelyn's and Hugh's unblock
+- [x] Publish `data/papers.json` as a bootstrap fixture for parallel team work;
+      it is not runtime state
 
 **T2 — only if Loop A is green**
 - [ ] `make break` — untracked patch introducing the null-arithmetic bug
 - [ ] Validation in the pipeline that detects partial writes and fails loudly
 
-**Deliverable to the team by 13:00:** a populated SQLite DB, `data/papers.json`, and
-a board that renders.
+**Deliverable to the team by 13:00:** PostgreSQL-backed ingestion, a bootstrap
+`data/papers.json` fixture, and a board that renders.
+
+**T1 — Port factory ownership transferred to Ben**
+
+- [ ] **Workflow A:** flagged paper → full-text/artifact enrichment → claim and
+      feasibility gate → experiment package → **execute it** → compare evidence →
+      retry implementation failures (max 2) → Review step → approve the outcome
+- [ ] The rejection path. Show a failed run being rejected and re-prompted. **This
+      is the most important single thing in the demo.**
+- [ ] **Workflow 0 (Loop 0):** change request against the board Service → agent
+      implements → Review → approve. Run one real change: "add reproduction status
+      column to the board."
+- [ ] **Workflow B, only after Loop A is green:** accept the SigNoz webhook and
+      trigger the reviewed failure-response path.
+
+Ben owns the live Port workflow definitions and their end-to-end verification.
+Gracelyn's existing Workflow A and Workflow B definitions are the starting point;
+preserve her completed work and extend it rather than replacing it blindly.
 
 ---
 
-### GRACELYN — Port
+### GRACELYN — Port context + operator experience
 
-You own the thing that's actually being judged. Mauritius said it plainly: he will
-not look at the app.
+You own the Port context lake, catalog, and operator experience. Port workflow
+implementation transferred to Ben after the initial Workflow A and Workflow B
+scaffolds were published.
 
 **Now**
 - [ ] Port signup (Gmail restriction is lifted today — if it fails, find Mauritius)
@@ -178,24 +222,14 @@ not look at the app.
 
 **T1 — by 15:00. Do these in order; each is demoable alone.**
 - [ ] Blueprint: `Paper` — title, authors, arxiv_id, score, status
-- [ ] Blueprint: `Reproduction` — paper ref, status, run result, file path, retries
+- [ ] Blueprint: `Reproduction` — paper ref, selected claim, scope, provenance,
+      reported/observed values, comparison rule, outcome, evidence path, retries
 - [ ] Blueprint: `Service` — for the paper board itself (Loop 0)
-- [ ] Seed entities from `data/papers.json` (don't wait for live scraping)
-- [ ] **Workflow A:** flagged paper → agent writes repro → **execute it** →
-      Review step → approve
-- [ ] The rejection path. Show a failed run being rejected and re-prompted. **This
-      is the most important single thing in the demo** — it's what separates us from
-      a wrapper that prints LLM output.
+- [ ] Seed entities from `data/papers.json` for setup only (don't wait for live scraping)
 - [ ] Dashboard: papers ingested, reproductions attempted, pass rate, pending reviews
-- [ ] **Workflow 0 (Loop 0):** change request against the board Service → agent
-      implements → Review → approve. Run one real change: "add reproduction status
-      column to the board."
 
-**T2**
-- [ ] Workflow B: accept the SigNoz webhook, trigger diagnose-and-patch
-
-**Deliverable:** a Port dashboard a stranger can read, and two workflows that run
-live.
+**Deliverable:** a Port catalog and dashboard a stranger can read, plus a clean
+handoff of existing workflow context to Ben.
 
 ---
 
@@ -268,13 +302,17 @@ someone else's work.
 }
 ```
 
-- **Ben publishes `data/papers.json`** as soon as he has anything, even hand-faked.
-  Gracelyn and Hugh both work off this file, not off the live scraper.
-- **Hugh's alert POSTs to a Port webhook URL** that Gracelyn provides. Direction
+- **`data/papers.json` is a bootstrap fixture only.** Runtime paper, full-text,
+  provenance, and collection state is canonical in PostgreSQL. Port consumes
+  entity metadata/status; it is not the raw paper-content store.
+- **Hugh's alert POSTs to a Port webhook URL** that Ben provides. Direction
   matters: SigNoz runs on localhost and Port cannot reach into it. Traffic must flow
   SigNoz → Port.
-- **Reproductions land in `reproductions/{arxiv_id}.py`.** Gracelyn's workflow writes
-  there; Ben's board reads the directory listing for status.
+- **Attempts land in `reproductions/{arxiv_id}/`.** At minimum the directory holds
+  `manifest.json`, `README.md`, executable code, a locked dependency description,
+  and machine-readable results. Logs and plots may be stored as GitHub workflow
+  artifacts with their URLs and digests recorded in Port. The board reads the
+  Port outcome; directory existence alone never means success.
 
 **Nobody blocks on live data.** Fake the interface, integrate at 15:00.
 
@@ -322,7 +360,8 @@ system or distort Loop B to manufacture a Bright Data failure.
 
 ## 10. Open decisions — resolve by 11:15
 
-- **Does a reproduction get committed as a real GitHub PR, or written to
-  `reproductions/` and surfaced in Port?** PR is more impressive, costs ~30 min and
-  a token. **Gracelyn's call — it changes what Workflow A builds.**
+- **Publication policy:** every approved attempt is a GitHub PR containing its
+  manifest and package. Port approval attests to the reviewed outcome; merging the
+  PR publishes the evidence. A green process without a claim comparison cannot be
+  labeled `reproduced`.
 - Scoring: heuristic vs. LLM call. Start heuristic.

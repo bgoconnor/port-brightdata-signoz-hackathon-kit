@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 from datetime import datetime
@@ -15,7 +16,7 @@ from .models import Paper, ScrapeRun
 
 BRIGHTDATA_API_URL = 'https://api.brightdata.com'
 DEFAULT_TARGET_URL = 'https://arxiv.org/list/cs.AI/new'
-REQUIRED_FIELDS = ('arxiv_id', 'title', 'authors', 'abstract', 'subjects')
+REQUIRED_FIELDS = ('arxiv_id', 'title', 'authors', 'abstract', 'subjects', 'full_text')
 SCORE_SIGNALS = {
     'algorithm': 0.22,
     'we propose': 0.22,
@@ -31,18 +32,23 @@ class BrightDataError(RuntimeError):
 
 
 def _configuration() -> tuple[str, str, str]:
-    api_key = os.environ.get('BRIGHTDATA_API_KEY', '').strip()
+    api_key = _api_key()
     collector_id = os.environ.get('BRIGHTDATA_COLLECTOR_ID', '').strip()
     target_url = os.environ.get('BRIGHTDATA_TARGET_URL', DEFAULT_TARGET_URL).strip()
-    if not api_key:
-        raise BrightDataError('BRIGHTDATA_API_KEY is not configured')
     if not collector_id:
         raise BrightDataError('BRIGHTDATA_COLLECTOR_ID is not configured')
     return api_key, collector_id, target_url
 
 
+def _api_key() -> str:
+    api_key = os.environ.get('BRIGHTDATA_API_KEY', '').strip()
+    if not api_key:
+        raise BrightDataError('BRIGHTDATA_API_KEY is not configured')
+    return api_key
+
+
 def _request(method: str, path: str, payload: Any = None) -> bytes:
-    api_key, _, _ = _configuration()
+    api_key = _api_key()
     headers = {'Authorization': f'Bearer {api_key}'}
     data = None
     if payload is not None:
@@ -99,18 +105,24 @@ def _normalize_record(raw: dict[str, Any], scraped_at: datetime) -> dict[str, An
         'authors': _string_list(raw.get('authors')),
         'abstract': str(raw.get('abstract') or raw.get('summary') or '').strip(),
         'subjects': _string_list(raw.get('subjects') or raw.get('categories')),
+        'full_text': str(raw.get('full_text') or '').strip(),
+        'full_text_source_url': str(raw.get('source_url') or '').strip(),
+        'full_text_acquired_at': scraped_at,
         'scraped_at': scraped_at,
     }
     missing = [field for field in REQUIRED_FIELDS if not paper[field]]
     if missing:
         identity = paper['arxiv_id'] or paper['title'] or '<unknown>'
         raise BrightDataError(f'Paper {identity} is missing required fields: {missing}')
+    if len(paper['full_text']) < 1000:
+        raise BrightDataError(f"Paper {paper['arxiv_id']} returned too little full text")
     text = f"{paper['title']} {paper['abstract']}".lower()
     paper['score'] = round(
         min(1.0, sum(weight for term, weight in SCORE_SIGNALS.items() if term in text)),
         2,
     )
     paper['reproducible'] = paper['score'] >= 0.5
+    paper['full_text_sha256'] = hashlib.sha256(paper['full_text'].encode()).hexdigest()
     return paper
 
 
@@ -159,6 +171,8 @@ def _ingest_results(run: ScrapeRun) -> ScrapeRun:
 
     scraped_at = run.bright_finished_at or timezone.now()
     records = [_normalize_record(record, scraped_at) for record in response]
+    for record in records:
+        record['full_text_collection_id'] = run.bright_job_id or ''
     papers = [Paper(**record) for record in records]
     with transaction.atomic():
         Paper.objects.bulk_create(
@@ -168,6 +182,8 @@ def _ingest_results(run: ScrapeRun) -> ScrapeRun:
             update_fields=(
                 'title', 'authors', 'abstract', 'subjects',
                 'score', 'reproducible', 'scraped_at',
+                'full_text', 'full_text_source_url', 'full_text_sha256',
+                'full_text_acquired_at', 'full_text_collection_id',
             ),
         )
         run.records_received = len(records)

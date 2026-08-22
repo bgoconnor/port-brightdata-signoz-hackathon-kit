@@ -5,9 +5,13 @@ from .models import Paper, ScrapeRun
 
 @admin.register(Paper)
 class PaperAdmin(admin.ModelAdmin):
-    list_display = ('arxiv_id', 'title', 'score', 'reproducible', 'scraped_at')
+    list_display = ('arxiv_id', 'title', 'score', 'reproducible', 'is_enriched', 'scraped_at')
     list_filter = ('reproducible',)
     search_fields = ('arxiv_id', 'title', 'authors', 'subjects')
+
+    @admin.display(boolean=True)
+    def is_enriched(self, paper):
+        return bool(paper.full_text)
 
 
 @admin.register(ScrapeRun)

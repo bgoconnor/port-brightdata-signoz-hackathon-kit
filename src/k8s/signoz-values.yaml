@@ -1,6 +1,66 @@
-# Minimal values from the official SigNoz local Kubernetes installation guide.
+# Pinned local-development overrides for the official SigNoz Helm chart.
 global:
+  clusterName: minikube
   storageClass: standard
 
 clickhouse:
-  installCustomStorageClass: true
+  installCustomStorageClass: false
+  persistence:
+    storageClass: standard
+    size: 5Gi
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "4"
+      memory: 3Gi
+  zookeeper:
+    resources:
+      requests:
+        cpu: 250m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 768Mi
+    customLivenessProbe:
+      exec:
+        command:
+          - /bin/bash
+          - -c
+          - curl -s -m 5 http://localhost:8080/commands/ruok | grep ruok
+      initialDelaySeconds: 60
+      periodSeconds: 10
+      timeoutSeconds: 10
+      successThreshold: 1
+      failureThreshold: 12
+    customReadinessProbe:
+      exec:
+        command:
+          - /bin/bash
+          - -c
+          - curl -s -m 5 http://localhost:8080/commands/ruok | grep error | grep null
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 10
+      successThreshold: 1
+      failureThreshold: 12
+    persistence:
+      enabled: true
+      storageClass: standard
+      size: 1Gi
+
+signoz:
+  persistence:
+    storageClass: standard
+    size: 1Gi
+
+# Local image pulls can consume the chart's default 10-minute deployment window.
+otelCollector:
+  progressDeadlineSeconds: 1800
+
+# This local installation has one ClickHouse node. Replicated migrations add a
+# ZooKeeper dependency without providing any redundancy and are fragile when
+# Minikube is sharing resources with the application build.
+telemetryStoreMigrator:
+  enableReplication: false

@@ -17,8 +17,10 @@ resources when your current profile is smaller:
 minikube start --memory=8g --cpus=4 --disk-size=30g
 ```
 
-The root `.env` must contain `BRIGHTDATA_API_KEY`. The deploy script loads that
-file and creates or updates the `hackathon-brightdata` Kubernetes Secret.
+The root `.env` must contain `BRIGHTDATA_API_KEY` and
+`BRIGHTDATA_COLLECTOR_ID=c_mt4y2std23j5floxrv`. This single hosted scraper
+returns up to three complete papers per run. The deploy script loads both values
+and creates or updates the `hackathon-brightdata` Kubernetes Secret.
 
 ## Start the project
 
@@ -35,26 +37,9 @@ Build and deploy the frontend, backend, PostgreSQL, and SigNoz:
 ```
 
 The script creates the `hackathon` namespace, deploys the application, and runs
-the default Django migrations. It installs two pinned official Helm charts in
-the same namespace:
-
-- `signoz/signoz` provides the SigNoz UI, ingest collector, and telemetry store.
-- `signoz/k8s-infra` provides a node-local collector plus a cluster collector for
-  Kubernetes metrics, events, and selected container logs.
-
-The default pinned chart versions are `0.138.0` for `signoz/signoz` and `0.17.0`
-for `signoz/k8s-infra`. Override them with `SIGNOZ_CHART_VERSION` and
-`SIGNOZ_K8S_INFRA_CHART_VERSION` when deliberately testing an upgrade.
-
-The Django backend sends OpenTelemetry data to the node-local collector, which
-adds Kubernetes metadata before forwarding it to SigNoz. Automatic
-instrumentation covers Django requests, PostgreSQL calls, Bright Data HTTP calls,
-Python process metrics, and trace-correlated application logs.
-
-The workload collectors monitor node, pod, container, deployment, StatefulSet,
-and DaemonSet health. Container-file logs are limited to the `hackathon`
-namespace; backend container logs are excluded there because the Python SDK
-already exports them directly.
+the default Django migrations. It installs pinned official SigNoz Helm charts in
+the separate `signoz` namespace. The Django service exports its traces, HTTP and
+database metrics, and trace-correlated application logs directly over OTLP.
 
 To update only SigNoz, run:
 
@@ -62,8 +47,7 @@ To update only SigNoz, run:
 ./src/k8s/deploy_signoz.sh
 ```
 
-After the initial SigNoz installation, rebuild the application without updating
-either SigNoz Helm release with:
+To rebuild the application without waiting for the SigNoz Helm releases, run:
 
 ```bash
 HACKATHON_SKIP_SIGNOZ=1 ./src/k8s/deploy_minikube.sh
@@ -95,7 +79,7 @@ The default Django admin is at <http://localhost:8000/admin/>.
 Forward the SigNoz UI in another terminal:
 
 ```bash
-kubectl -n hackathon port-forward service/signoz 8080:8080
+kubectl -n signoz port-forward service/signoz 8080:8080
 ```
 
 Open <http://localhost:8080> and create the local administrator account when
@@ -111,21 +95,9 @@ curl -fsS http://localhost:8000/api/scrape-runs/ | python -m json.tool
 In SigNoz, look for:
 
 - `hackathon-backend` under Services and Traces.
-- HTTP, PostgreSQL, and Bright Data child spans carrying `k8s.*` resource
-  attributes.
-- application metrics and logs filtered by
+- Django HTTP metrics in Metrics Explorer, filtered by
   `service.name = hackathon-backend`.
-- nodes, pods, containers, deployments, StatefulSets, and DaemonSets under
-  **Infrastructure -> Kubernetes** with cluster `minikube` and environment
-  `local`.
-- Kubernetes events and frontend/PostgreSQL container logs under Logs.
-
-Browser-side React telemetry and PostgreSQL server-specific metrics are not
-instrumented; PostgreSQL activity is visible through the backend's client spans
-and the pod/container workload metrics.
-
-This deployment sends application and Kubernetes telemetry into SigNoz but does
-not provision a project-specific dashboard or alert rule.
+- application logs filtered by `service.name = hackathon-backend`.
 
 ## Check status and logs
 
@@ -135,9 +107,8 @@ helm list -n hackathon
 kubectl -n hackathon logs -f deployment/hackathon-backend
 kubectl -n hackathon logs -f deployment/hackathon-frontend
 kubectl -n hackathon logs -f deployment/hackathon-postgres
-kubectl -n hackathon logs deployment/signoz-otel-collector --tail=100
-kubectl -n hackathon logs daemonset/signoz-k8s-infra-otel-agent --tail=100
-kubectl -n hackathon logs deployment/signoz-k8s-infra-otel-deployment --tail=100
+kubectl -n signoz get pods
+kubectl -n signoz logs deployment/signoz-otel-collector --tail=100
 ```
 
 The deployment follows SigNoz's official

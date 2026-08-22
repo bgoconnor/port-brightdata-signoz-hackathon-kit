@@ -12,6 +12,11 @@ class Paper(models.Model):
     score = models.FloatField()
     reproducible = models.BooleanField()
     scraped_at = models.DateTimeField()
+    full_text = models.TextField(blank=True)
+    full_text_source_url = models.URLField(max_length=500, blank=True)
+    full_text_sha256 = models.CharField(max_length=64, blank=True)
+    full_text_acquired_at = models.DateTimeField(null=True, blank=True)
+    full_text_collection_id = models.CharField(max_length=64, blank=True)
 
 
 class ScrapeRun(models.Model):
