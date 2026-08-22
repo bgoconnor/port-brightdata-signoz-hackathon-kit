@@ -103,12 +103,14 @@ spec:
             - name: OTEL_METRICS_EXPORTER
               value: otlp
             - name: OTEL_LOGS_EXPORTER
-              value: none
+              value: otlp
             - name: OTEL_METRIC_EXPORT_INTERVAL
               value: "10000"
             - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
               value: delta
             - name: OTEL_PYTHON_LOG_CORRELATION
+              value: "true"
+            - name: OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED
               value: "true"
           ports:
             - containerPort: 8000

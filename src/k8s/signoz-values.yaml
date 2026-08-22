@@ -58,3 +58,9 @@ signoz:
 # Local image pulls can consume the chart's default 10-minute deployment window.
 otelCollector:
   progressDeadlineSeconds: 1800
+
+# This local installation has one ClickHouse node. Replicated migrations add a
+# ZooKeeper dependency without providing any redundancy and are fragile when
+# Minikube is sharing resources with the application build.
+telemetryStoreMigrator:
+  enableReplication: false

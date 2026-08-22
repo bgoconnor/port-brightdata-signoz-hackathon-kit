@@ -28,8 +28,7 @@ Start Minikube if it is not already running:
 minikube start
 ```
 
-Build and deploy the frontend, backend, PostgreSQL, SigNoz, and its Kubernetes
-collection agents:
+Build and deploy the frontend, backend, PostgreSQL, and SigNoz:
 
 ```bash
 ./src/k8s/deploy_minikube.sh
@@ -37,9 +36,8 @@ collection agents:
 
 The script creates the `hackathon` namespace, deploys the application, and runs
 the default Django migrations. It installs pinned official SigNoz Helm charts in
-the separate `signoz` namespace. The Django service exports traces and HTTP
-metrics over OTLP, while the Kubernetes agents collect cluster metrics, events,
-and pod logs from the `hackathon` namespace only.
+the separate `signoz` namespace. The Django service exports its traces, HTTP and
+database metrics, and trace-correlated application logs directly over OTLP.
 
 To update only SigNoz, run:
 
@@ -85,11 +83,11 @@ kubectl -n signoz port-forward service/signoz 8080:8080
 Open <http://localhost:8080> and create the local administrator account when
 prompted.
 
-Generate a successful request and a controlled 404 trace through Django:
+Generate traces, metrics, and logs through the project's real paper API:
 
 ```bash
-curl -fsS http://localhost:8000/admin/login/ >/dev/null
-curl -sS -o /dev/null -w '%{http_code}\n' http://localhost:8000/observability-demo-not-found
+curl -fsS http://localhost:8000/api/papers/ | python -m json.tool
+curl -fsS http://localhost:8000/api/scrape-runs/ | python -m json.tool
 ```
 
 In SigNoz, look for:
@@ -97,8 +95,7 @@ In SigNoz, look for:
 - `hackathon-backend` under Services and Traces.
 - Django HTTP metrics in Metrics Explorer, filtered by
   `service.name = hackathon-backend`.
-- application logs filtered by `k8s.namespace.name = hackathon`.
-- the `minikube` cluster under Infrastructure > Kubernetes.
+- application logs filtered by `service.name = hackathon-backend`.
 
 ## Check status and logs
 
