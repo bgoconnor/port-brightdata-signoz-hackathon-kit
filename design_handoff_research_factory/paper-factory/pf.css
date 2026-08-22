@@ -327,12 +327,12 @@ a:hover{color:var(--pf-cyan-2);border-bottom-color:var(--pf-cyan-2)}
 .pf-mocknote{margin-top:28px;font-family:var(--pf-mono);font-size:13px;color:var(--pf-t6)}
 
 /* ---------- tool identity (color-coded, monogram tiles) ---------- */
-:root{--tool-port:#6366F1;--tool-port-t:#B9B8FF;--tool-signoz:#F25733;--tool-signoz-t:#FFA184;--tool-bright:#3E7BFA;--tool-bright-t:#9DBEFF;--tool-gha-b:#8B949E;--tool-gha-t:#F0F6FC}
+:root{--tool-port:#6366F1;--tool-port-t:#B9B8FF;--tool-signoz:#F25733;--tool-signoz-t:#FFA184;--tool-bright:#3E7BFA;--tool-bright-t:#9DBEFF;--tool-k8s-b:#8B949E;--tool-k8s-t:#F0F6FC}
 .pf-ttile{display:inline-flex;width:17px;height:17px;border-radius:4px;align-items:center;justify-content:center;font-family:var(--pf-mach);font-size:8px;font-weight:700;color:#fff;flex:none;letter-spacing:0}
 .pf-ttile[data-tool="port"]{background:var(--tool-port)}
 .pf-ttile[data-tool="signoz"]{background:var(--tool-signoz)}
 .pf-ttile[data-tool="bright"]{background:var(--tool-bright)}
-.pf-ttile[data-tool="gha"]{background:#21262D;border:1px solid var(--tool-gha-b);color:var(--tool-gha-t)}
+.pf-ttile[data-tool="k8s"]{background:#21262D;border:1px solid var(--tool-k8s-b);color:var(--tool-k8s-t)}
 .pf-vendor{display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid var(--pf-line-2);border-radius:4px;background:rgba(255,255,255,.02);flex-wrap:wrap}
 .pf-vendor b{font-family:var(--pf-mach);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
 .pf-vendor s{text-decoration:none;font-family:var(--pf-mono);font-size:11.5px;color:var(--pf-t4)}
@@ -361,8 +361,8 @@ a:hover{color:var(--pf-cyan-2);border-bottom-color:var(--pf-cyan-2)}
 .pf-hbox[data-tool="signoz"] b{color:var(--tool-signoz-t)}
 .pf-hbox[data-tool="bright"]{border-color:var(--tool-bright);background:rgba(62,123,250,.12)}
 .pf-hbox[data-tool="bright"] b{color:var(--tool-bright-t)}
-.pf-hbox[data-tool="gha"]{border-color:var(--tool-gha-b);background:#1A2026}
-.pf-hbox[data-tool="gha"] b{color:var(--tool-gha-t)}
+.pf-hbox[data-tool="k8s"]{border-color:var(--tool-k8s-b);background:#1A2026}
+.pf-hbox[data-tool="k8s"] b{color:var(--tool-k8s-t)}
 .pf-heal-drop{position:relative;height:70px}
 .pf-drop-line{position:absolute;top:2px;width:1px;height:18px;background:var(--pf-t7)}
 .pf-drop-line:after{content:"";position:absolute;left:-3.5px;bottom:-1px;border-left:3.5px solid transparent;border-right:3.5px solid transparent;border-top:5px solid var(--pf-t7)}
@@ -378,7 +378,7 @@ a:hover{color:var(--pf-cyan-2);border-bottom-color:var(--pf-cyan-2)}
 .pf-leg i[data-tool="port"]{background:var(--tool-port)}
 .pf-leg i[data-tool="signoz"]{background:var(--tool-signoz)}
 .pf-leg i[data-tool="bright"]{background:var(--tool-bright)}
-.pf-leg i[data-tool="gha"]{background:#21262D;border:1px solid var(--tool-gha-b)}
+.pf-leg i[data-tool="k8s"]{background:#21262D;border:1px solid var(--tool-k8s-b)}
 .pf-heal-legend em{font-style:normal;font-family:var(--pf-mono);font-size:12px;color:var(--pf-t3);white-space:nowrap}
 
 /* ---------- repro summary ---------- */
@@ -414,9 +414,9 @@ html[data-pf-theme="light"] .pf-skel{background:linear-gradient(90deg,#E5EAEC,#D
 html[data-pf-theme="light"] *::-webkit-scrollbar-thumb{background:#C0CCD2}
 html[data-pf-theme="light"] *::-webkit-scrollbar-thumb:hover{background:#A9B8C0}
 html[data-pf-theme="light"] .pf-hbox{background:rgba(18,32,43,.03)}
-html[data-pf-theme="light"] .pf-hbox[data-tool="gha"]{background:#F6F8FA;border-color:#8B949E}
-html[data-pf-theme="light"] .pf-hbox[data-tool="gha"] b{color:#24292F}
-html[data-pf-theme="light"]{--tool-port-t:#4A4DBF;--tool-signoz-t:#B93A18;--tool-bright-t:#1D55C9;--tool-gha-t:#24292F}
+html[data-pf-theme="light"] .pf-hbox[data-tool="k8s"]{background:#F6F8FA;border-color:#8B949E}
+html[data-pf-theme="light"] .pf-hbox[data-tool="k8s"] b{color:#24292F}
+html[data-pf-theme="light"]{--tool-port-t:#4A4DBF;--tool-signoz-t:#B93A18;--tool-bright-t:#1D55C9;--tool-k8s-t:#24292F}
 html[data-pf-theme="light"] .pf-st--gen{box-shadow:0 0 0 1px rgba(10,135,160,.14)}
 html[data-pf-theme="light"] .pf-wf:before{background:radial-gradient(820px 240px at 12% -40%,rgba(10,135,160,.06),transparent 70%)}
 html[data-pf-theme="light"] .pf-heal-return u{background:var(--pf-panel)}

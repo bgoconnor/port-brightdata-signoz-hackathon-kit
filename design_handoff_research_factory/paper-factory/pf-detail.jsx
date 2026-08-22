@@ -21,9 +21,9 @@ function ReproSummary({ p }) {
         <div className="pf-repro-what">
           <u className="pf-eyebrow">what was reproduced</u>
           <p>{p.repro_summary || "The paper's headline claim was implemented and executed. The run output and every attempt are below."}</p>
-          {p.repo_url ? (
-            <a className="pf-repo" href={p.repo_url} target="_blank" rel="noreferrer noopener">
-              <ToolTile t="gha" />{p.repo_url.replace("https://", "")}
+          {p.evidence_url ? (
+            <a className="pf-repo" href={p.evidence_url} target="_blank" rel="noreferrer noopener">
+              <ToolTile t="k8s" />{p.evidence_url.replace("https://", "")}
             </a>
           ) : null}
         </div>

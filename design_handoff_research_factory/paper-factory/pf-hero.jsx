@@ -13,7 +13,7 @@ function PFMark({ size }) {
 }
 
 function ToolTile({ t }) {
-  const M = { port: "P", signoz: "S", bright: "B", gha: "GH" };
+  const M = { port: "P", signoz: "S", bright: "B", k8s: "GH" };
   return M[t] ? <i className="pf-ttile" data-tool={t}>{M[t]}</i> : null;
 }
 
@@ -76,7 +76,7 @@ function HealLoops() {
         <div className="pf-heal-row">
           <HBox name="Paper flagged" sub="in the catalog" />
           <Arr /><HBox tool="port" name="Port agent" sub="writes code" />
-          <Arr /><HBox tool="gha" name="GitHub Actions" sub="runs it" />
+          <Arr /><HBox tool="k8s" name="Kubernetes" sub="runs it" />
           <Arr /><HBox tool="port" name="Port" sub="human approves" />
         </div>
         <div className="pf-heal-return">

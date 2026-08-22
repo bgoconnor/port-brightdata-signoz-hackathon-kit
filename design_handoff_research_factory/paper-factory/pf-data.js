@@ -367,7 +367,7 @@ if __name__ == "__main__":
       score: 0.91, reproducible: true, status: "awaiting_review", retry_count: 1, scraped_at: ts(0, 4, 41),
       generated_code: CODE_SPEC, run_output: OUT_SPEC,
       repro_summary: "Gating draft proposals on the draft model's entropy raised the token acceptance rate from 0.621 to 0.774 at the paper's draft budget (k = 4). The gate needed no tuning beyond the paper's own threshold.",
-      repo_url: "https://github.com/research-factory/repro-2608-04417",
+      evidence_url: "https://artifacts.paper-factory.local/reproductions/2608-04417",
       repro_result: { claimed: "acceptance 0.620 \u2192 0.780 (+0.160)", measured: "0.621 \u2192 0.774 (+0.153)", reproduced: true },
       attempts: [
         { index: 1, status: "failed", code: CODE_SPEC_V1, output: TB_SPEC, duration_s: 4.31, finished_at: ts(0, 5, 2) },
@@ -381,7 +381,7 @@ if __name__ == "__main__":
       score: 0.84, reproducible: true, status: "awaiting_review", retry_count: 2, scraped_at: ts(0, 3, 18),
       generated_code: CODE_CONS, run_output: OUT_CONS,
       repro_summary: "Masking self-distillation to teacher-confident tokens recovered 94.0% of full-supervision accuracy with 10% of labels \u2014 the paper's headline number \u2014 after two failed attempts on the class axis and the mask threshold.",
-      repo_url: "https://github.com/research-factory/repro-2608-04766",
+      evidence_url: "https://artifacts.paper-factory.local/reproductions/2608-04766",
       repro_result: { claimed: "94% relative recovery at 10% labels", measured: "relative recovery 0.940", reproduced: true },
       attempts: [
         { index: 1, status: "failed", code: CODE_CONS.replace("w = np.zeros((C, C))", "w = np.zeros((C, C))  # first attempt: off-by-one on the class axis").replace("w[p[i].argmax()] += p[i]", "w[p[i].argmax() + 1] += p[i]"), output: TB_CONS_1, duration_s: 2.87, finished_at: ts(0, 3, 41) },
@@ -403,7 +403,7 @@ if __name__ == "__main__":
       score: 0.88, reproducible: true, status: "rejected", retry_count: 0, scraped_at: ts(1, 22, 9),
       generated_code: CODE_LORA, run_output: OUT_LORA,
       repro_summary: "The run completed but measured nothing: the harness compared both merge methods against the same random delta, so the claimed 97% vs 71% retention gap never appeared. Held out of the catalog until the harness uses per-task deltas.",
-      repo_url: "https://github.com/research-factory/repro-2608-03981",
+      evidence_url: "https://artifacts.paper-factory.local/reproductions/2608-03981",
       repro_result: { claimed: "\u226597% retention vs 71% naive mean", measured: "70.7% for both methods \u2014 gap not measured", reproduced: false },
       review_note: "Runs clean but the harness compares each merge against the same random delta, so both methods score 70.7% — the reported 97% vs 71% gap is not being measured. Rejected; needs a per-task delta before it goes back in the queue.",
       attempts: [{ index: 1, status: "passed", code: CODE_LORA, output: OUT_LORA, duration_s: 6.02, finished_at: ts(1, 22, 31) }]
@@ -414,7 +414,7 @@ if __name__ == "__main__":
       abstract: "Constrained decoding enforces a grammar on generated text but usually needs a stack whose depth grows with the constraint. We give a decoding procedure that keeps a fixed-size summary of the constraint state and prove it accepts exactly the same language for all regular constraints. Memory is constant in sequence length, and throughput is within 4% of unconstrained sampling.",
       score: 0.76, reproducible: true, status: "approved", retry_count: 0, scraped_at: ts(2, 9, 30),
       repro_summary: "The fixed-size summary automaton agreed with the reference stack automaton on every string up to length 12 over the constraint alphabet \u2014 22.4M cases, zero mismatches \u2014 the exhaustive check Theorem 2 requires.",
-      repo_url: "https://github.com/research-factory/repro-2608-02240",
+      evidence_url: "https://artifacts.paper-factory.local/reproductions/2608-02240",
       repro_result: { claimed: "identical language for all regular constraints", measured: "0 mismatches in 22,369,621 strings", reproduced: true },
       generated_code: `"""Bounded-memory constrained decoding — language-equivalence check.
 
@@ -607,7 +607,7 @@ if __name__ == "__main__":
         gen.generated_code = CODE_CURV_DONE;
         gen.repro_summary = "The curvature-aware schedule reached the tuned cosine baseline's final loss in 2,704 of its 4,000 steps on the paper's convex-quadratic setup.";
         gen.repro_result = { claimed: "baseline loss in 0.68\u00d7 the steps", measured: "step ratio 0.676", reproduced: true };
-        gen.repo_url = "https://github.com/research-factory/repro-2608-05122";
+        gen.evidence_url = "https://artifacts.paper-factory.local/reproductions/2608-05122";
         gen.run_output = gen.run_output || `$ python main.py
 tuned cosine baseline : 4000 steps, final loss 0.0412
 curvature-aware       : 2704 steps, final loss 0.0409
@@ -622,7 +622,7 @@ exit status 0  ·  22.40s  ·  peak rss 208 MB`;
         gen.run_output = g.output;
         gen.repro_summary = "The paper's estimator was implemented against the synthetic benchmark from its evaluation section and hit the reported effect size within the run's tolerance (\u00b10.02).";
         gen.repro_result = { claimed: "effect size " + g.claim, measured: g.got + " measured", reproduced: true };
-        gen.repo_url = "https://github.com/research-factory/repro-" + gen.arxiv_id.replace(".", "-");
+        gen.evidence_url = "https://artifacts.paper-factory.local/reproductions/" + gen.arxiv_id.replace(".", "-");
       }
       gen.attempts = gen.attempts.length ? gen.attempts : [{ index: 1, status: "passed", code: gen.generated_code, output: gen.run_output, duration_s: 22.4, finished_at: new Date().toISOString() }];
       gen.retry_count = 0;

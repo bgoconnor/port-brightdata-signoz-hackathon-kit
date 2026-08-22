@@ -26,7 +26,7 @@
       source: str(p.source, "arXiv"),
       source_url: str(p.source_url, ""),
       repro_summary: str(p.repro_summary, ""),
-      repo_url: str(p.repo_url, ""),
+      evidence_url: str(p.evidence_url, ""),
       repro_result: p.repro_result && typeof p.repro_result === "object"
         ? { claimed: str(p.repro_result.claimed, ""), measured: str(p.repro_result.measured, ""), reproduced: !!p.repro_result.reproduced }
         : null,

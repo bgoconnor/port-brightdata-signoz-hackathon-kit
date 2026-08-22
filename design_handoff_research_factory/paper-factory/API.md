@@ -69,7 +69,7 @@ Everything above, plus:
   "run_output": "$ python main.py\nbaseline acceptance rate : 0.621\n…\nexit status 0  ·  38.90s",
   "review_note": "optional free text shown after a decision",
   "repro_summary": "one short paragraph: what was actually reproduced, in plain words",
-  "repo_url": "https://github.com/research-factory/repro-2608-04417",
+  "evidence_url": "https://artifacts.paper-factory.local/reproductions/2608-04417",
   "repro_result": {"claimed": "acceptance 0.620 → 0.780 (+0.160)", "measured": "0.621 → 0.774 (+0.153)", "reproduced": true},
   "attempts": [
     {"index": 1, "status": "failed", "code": "…", "output": "Traceback (most recent call last):\n…",
@@ -80,7 +80,7 @@ Everything above, plus:
 }
 ```
 
-- `repro_summary`, `repo_url`, `repro_result` feed the "the repro" panel shown for any paper with
+- `repro_summary`, `evidence_url`, `repro_result` feed the "the repro" panel shown for any paper with
   attempts or run output. All three are optional — the panel renders placeholders/hides the link
   when absent. `repro_result.reproduced` drives the reproduced / not-reproduced verdict chip.
 

@@ -44,7 +44,7 @@ Notes per endpoint:
   reproducible-only toggle, and activity-vs-newest sorting client-side. Omit the heavy fields
   (`generated_code`, `run_output`, `attempts`) here; the client strips them anyway.
 - **/papers/{id}** — the whole detail object. The "the repro" panel needs `repro_summary`,
-  `repro_result{claimed,measured,reproduced}`, `repo_url`; the panel shows for any paper with
+  `repro_result{claimed,measured,reproduced}`, `evidence_url`; the panel shows for any paper with
   attempts or run output and degrades field-by-field. `attempts[]` must include failed attempts
   with full tracebacks — the UI renders them expanded on purpose.
 - **/review** — respond with the updated paper. The UI applies the decision optimistically,
@@ -101,7 +101,7 @@ These are front-end-complete and clearly labeled as prototypes; wire them or lea
 
 - `source_url` — row identifier + detail header link. Absolute https URL or empty (empty
   renders plain text, no link). `arxiv_id` stays the primary key even for blog-sourced items.
-- `repo_url` — the GitHub link on the repro panel. Point it at the real repo your pipeline
+- `evidence_url` — the GitHub link on the repro panel. Point it at the real repo your pipeline
   opens (e.g. the PR/branch with `main.py`); shown with a GH monogram tile.
 
 ## 8. Security expectations (already handled, don't undo)
@@ -121,4 +121,4 @@ These are front-end-complete and clearly labeled as prototypes; wire them or lea
 3. Implement the four endpoints per `API.md`; verify with `?api=/api` first.
 4. Kill switch check: stop the backend, reload — the page must render the snapshot with the
    amber "snapshot" chip and one inline notice. If it blanks, something changed in `pf-api.js`.
-5. Optional: wire waitlist/settings (section 6), real `repo_url`s (section 7).
+5. Optional: wire waitlist/settings (section 6), real `evidence_url`s (section 7).
