@@ -86,8 +86,10 @@ Our app triggers one hosted Bright Data collector for arXiv cs.AI /new
   -> scoring step flags papers with a potentially testable claim
   -> selected paper already has full text + provenance in PostgreSQL
   -> upsert Paper entity in Port
-  -> Port workflow:
-       extract one explicit claim and its reported metric
+  -> Port "Start reproduction" action creates a correlated Reproduction request
+  -> Kubernetes execution integration:
+       load the complete paper from PostgreSQL
+       -> extract one explicit claim and its reported metric
        -> feasibility gate (reproduce / mechanism_demo / blocked)
        -> generate an experiment manifest and versioned package
        -> build a clean isolated environment
@@ -95,8 +97,9 @@ Our app triggers one hosted Bright Data collector for arXiv cs.AI /new
             infra/code failure -> repair from evidence (max 2 retries)
             experiment completes -> compare observed vs. reported result
        -> outcome: reproduced / not_reproduced / inconclusive / blocked
-       -> Review step: human approves the evidence and label
-  -> package + manifest + logs + metrics land in reproductions/{arxiv_id}/
+       -> report the versioned execution result and artifact references to Port
+  -> Port workflow applies retry/review policy; human approves evidence and label
+  -> package + manifest + logs + metrics land in the configured object store
   -> whole run traced in SigNoz
 ```
 
@@ -308,11 +311,14 @@ someone else's work.
 - **Hugh's alert POSTs to a Port webhook URL** that Ben provides. Direction
   matters: SigNoz runs on localhost and Port cannot reach into it. Traffic must flow
   SigNoz → Port.
-- **Attempts land in `reproductions/{arxiv_id}/`.** At minimum the directory holds
-  `manifest.json`, `README.md`, executable code, a locked dependency description,
-  and machine-readable results. Logs and plots may be stored as GitHub workflow
-  artifacts with their URLs and digests recorded in Port. The board reads the
-  Port outcome; directory existence alone never means success.
+- **Attempt metadata is correlated in Port; large evidence is stored in the object
+  store.** Each attempt includes a manifest, executable package, locked dependency
+  description, machine-readable result, logs, and any plots. Port records their
+  URLs and digests. PostgreSQL remains canonical for paper content. The board reads
+  the Port outcome; artifact existence alone never means success.
+- **Execution is Kubernetes-backed, not GitHub Actions.** Port emits the versioned
+  request contract in `port/contracts/`; the Kubernetes integration reports the
+  matching result contract back to the same Reproduction entity.
 
 **Nobody blocks on live data.** Fake the interface, integrate at 15:00.
 
@@ -360,8 +366,7 @@ system or distort Loop B to manufacture a Bright Data failure.
 
 ## 10. Open decisions — resolve by 11:15
 
-- **Publication policy:** every approved attempt is a GitHub PR containing its
-  manifest and package. Port approval attests to the reviewed outcome; merging the
-  PR publishes the evidence. A green process without a claim comparison cannot be
-  labeled `reproduced`.
+- **Publication policy:** Port approval publishes the reviewed outcome and its
+  immutable object-store evidence references. A green process without a claim
+  comparison cannot be labeled `reproduced`.
 - Scoring: heuristic vs. LLM call. Start heuristic.
