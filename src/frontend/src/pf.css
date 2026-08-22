@@ -126,7 +126,9 @@ a:hover{color:var(--pf-cyan-2);border-bottom-color:var(--pf-cyan-2)}
 .pf-sort{font-family:var(--pf-mono);font-size:12.5px;color:var(--pf-fg-3);padding-bottom:12px}
 
 /* ---------- table ---------- */
-.pf-table{border-top:1px solid var(--pf-line-2)}
+/* delta 3: the table sits on a panel — a white card in light mode */
+.pf-table{background:var(--pf-panel);border:1px solid var(--pf-line-2);border-radius:3px;overflow:hidden}
+.pf-table .pf-row:last-child{border-bottom:none}
 .pf-hrow,.pf-row{display:grid;grid-template-columns:1fr 216px 116px 208px;align-items:center;gap:24px;border-left:3px solid transparent}
 .pf-hrow{padding:11px 16px;border-bottom:1px solid var(--pf-line)}
 .pf-hrow>div{font-family:var(--pf-mach);font-size:10.5px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--pf-fg-3)}
@@ -416,6 +418,10 @@ html[data-pf-theme="light"] *::-webkit-scrollbar-thumb:hover{background:#A9B8C0}
 html[data-pf-theme="light"] .pf-hbox{background:rgba(18,32,43,.03)}
 html[data-pf-theme="light"] .pf-hbox[data-tool="gha"]{background:#F6F8FA;border-color:#8B949E}
 html[data-pf-theme="light"] .pf-hbox[data-tool="gha"] b{color:#24292F}
+/* The GH monogram tile keeps its fixed dark background in both themes,
+   so it must keep a light foreground: --tool-gha-t flips dark for text
+   labels on light panels and would otherwise render dark-on-dark. */
+html[data-pf-theme="light"] .pf-ttile[data-tool="gha"]{color:#F0F6FC}
 html[data-pf-theme="light"]{--tool-port-t:#4A4DBF;--tool-signoz-t:#B93A18;--tool-bright-t:#1D55C9;--tool-gha-t:#24292F}
 html[data-pf-theme="light"] .pf-st--gen{box-shadow:0 0 0 1px rgba(10,135,160,.14)}
 html[data-pf-theme="light"] .pf-wf:before{background:radial-gradient(820px 240px at 12% -40%,rgba(10,135,160,.06),transparent 70%)}
