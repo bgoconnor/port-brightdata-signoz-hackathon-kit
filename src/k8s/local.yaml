@@ -7,6 +7,46 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: hackathon-postgres
+  namespace: hackathon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hackathon-postgres
+  template:
+    metadata:
+      labels:
+        app: hackathon-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17-alpine
+          env:
+            - name: POSTGRES_DB
+              value: hackathon
+            - name: POSTGRES_USER
+              value: hackathon
+            - name: POSTGRES_PASSWORD
+              value: hackathon
+          ports:
+            - containerPort: 5432
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hackathon-postgres
+  namespace: hackathon
+spec:
+  selector:
+    app: hackathon-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: hackathon-backend
   namespace: hackathon
 spec:
@@ -23,6 +63,15 @@ spec:
         - name: backend
           image: hackathon-backend:local
           imagePullPolicy: Never
+          env:
+            - name: POSTGRES_HOST
+              value: hackathon-postgres
+            - name: POSTGRES_DB
+              value: hackathon
+            - name: POSTGRES_USER
+              value: hackathon
+            - name: POSTGRES_PASSWORD
+              value: hackathon
           ports:
             - containerPort: 8000
 ---
