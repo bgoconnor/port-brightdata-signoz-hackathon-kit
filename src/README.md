@@ -102,13 +102,20 @@ In SigNoz, look for:
 ## Check status and logs
 
 ```bash
-kubectl -n hackathon get deployments,pods,services
+kubectl -n hackathon get deployments,statefulsets,daemonsets,pods,services
+helm list -n hackathon
 kubectl -n hackathon logs -f deployment/hackathon-backend
 kubectl -n hackathon logs -f deployment/hackathon-frontend
 kubectl -n hackathon logs -f deployment/hackathon-postgres
 kubectl -n signoz get pods
 kubectl -n signoz logs deployment/signoz-otel-collector --tail=100
 ```
+
+The deployment follows SigNoz's official
+[local Kubernetes installation](https://signoz.io/docs/install/kubernetes/local/)
+and [K8s Infra installation](https://signoz.io/docs/opentelemetry-collection-agents/k8s/k8s-infra/install-k8s-infra/)
+guides. Use `deploy_signoz.sh` for upgrades because it also applies the local
+pre-sign-up collector configuration required by this deployment.
 
 Use `Ctrl-C` to stop following logs or to stop a port-forward.
 
