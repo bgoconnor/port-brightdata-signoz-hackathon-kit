@@ -17,19 +17,41 @@ Port -> catalog, governance, scorecards, and workflows
 
 ## Start here
 
-1. Read the [product field guide](docs/product-field-guide.md).
-2. Follow the [team setup runbook](docs/setup.md).
-3. Choose a thin vertical slice from the [hackathon plan](docs/hackathon-plan.md).
+1. Read the authoritative [Paper Factory spec](SPEC.md).
+2. Read the [product field guide](docs/product-field-guide.md).
+3. Follow the [team setup runbook](docs/setup.md).
 4. Install the vendors' official agent packages before writing custom replacements.
 5. Use the project-local [`hackathon-platform-workflow`](skills/hackathon-platform-workflow/SKILL.md) skill for cross-product work.
 
+## Run the paper spine
+
+The deterministic fixture path requires only Python 3:
+
+```bash
+make fixture
+make test
+python3 -m http.server 8000
+```
+
+Open `http://localhost:8000/board.html`. For live acquisition through the existing
+Bright Data collector:
+
+```bash
+make scrape COLLECTOR_ID=c_mt4qssufwcgso7ees
+```
+
+Both paths publish the stable team contract to `data/papers.json` and SQLite to
+`data/papers.db`.
+
 ## Repository contents
 
+- `SPEC.md` — current, authoritative product and implementation specification.
+- `docs/specs/` — immutable source drafts and superseded specification history.
 - `docs/product-field-guide.md` — concepts, product boundaries, and failure modes.
 - `docs/setup.md` — agent packages, MCP setup, credentials, and smoke tests.
 - `docs/port-mcp-setup.md` — Port MCP installation, OAuth workaround, and verification.
-- `docs/hackathon-context.md` — event constraints, judging criteria, architecture, and scope.
-- `docs/hackathon-plan.md` — recommended architecture and demo milestones.
+- `docs/hackathon-context.md` — pre-kickoff research and historical planning context.
+- `docs/hackathon-plan.md` — generic baseline retained for reference; superseded by `SPEC.md` where they conflict.
 - `skills/hackathon-platform-workflow/` — project-local orchestration skill.
 - `.env.example` — variable names only; never commit real secrets.
 

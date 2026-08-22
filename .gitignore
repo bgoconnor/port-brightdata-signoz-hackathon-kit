@@ -10,3 +10,4 @@ __pycache__/
 *.key
 captures/
 artifacts/
+data/*.db

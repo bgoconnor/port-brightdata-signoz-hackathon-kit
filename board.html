@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Paper Factory</title>
+  <style>
+    :root { color-scheme: dark; font-family: ui-sans-serif, system-ui, sans-serif; }
+    body { background: #10151f; color: #edf3ff; margin: 0; padding: 2rem; }
+    main { margin: auto; max-width: 1100px; }
+    h1 { margin-bottom: .25rem; }
+    .subtitle { color: #9caeca; margin-top: 0; }
+    table { border-collapse: collapse; width: 100%; background: #172131; }
+    th, td { border-bottom: 1px solid #2a3a51; padding: .8rem; text-align: left; vertical-align: top; }
+    th { color: #9caeca; }
+    .yes { color: #70e1a1; }
+    .no { color: #f2b86b; }
+    .error { color: #ff8a8a; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Paper Factory</h1>
+    <p class="subtitle">New cs.AI papers, scored for minimal executable reproduction.</p>
+    <p id="summary">Loading papers…</p>
+    <table>
+      <thead><tr><th>Paper</th><th>Authors</th><th>Score</th><th>Reproduction status</th></tr></thead>
+      <tbody id="papers"></tbody>
+    </table>
+  </main>
+  <script>
+    const escapeHtml = value => String(value).replace(/[&<>'"]/g, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    })[char]);
+    fetch('data/papers.json')
+      .then(response => { if (!response.ok) throw new Error(`HTTP ${response.status}`); return response.json(); })
+      .then(papers => {
+        document.querySelector('#summary').textContent = `${papers.length} papers ingested`;
+        document.querySelector('#papers').innerHTML = papers.map(paper => `
+          <tr>
+            <td><strong>${escapeHtml(paper.title)}</strong><br><small>${escapeHtml(paper.arxiv_id)}</small></td>
+            <td>${paper.authors.map(escapeHtml).join(', ')}</td>
+            <td>${paper.score.toFixed(2)}</td>
+            <td class="${paper.reproducible ? 'yes' : 'no'}">${paper.reproducible ? 'Flagged' : 'Not flagged'}</td>
+          </tr>`).join('');
+      })
+      .catch(error => {
+        document.querySelector('#summary').innerHTML = `<span class="error">Could not load data/papers.json: ${escapeHtml(error.message)}</span>`;
+      });
+  </script>
+</body>
+</html>
