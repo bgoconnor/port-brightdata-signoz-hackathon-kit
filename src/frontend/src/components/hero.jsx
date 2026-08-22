@@ -76,16 +76,9 @@ export function HealLoops() {
             <HBox tool="port" name="human notified" small />
           </div>
         </div>
-        <div className="pf-heal-return">
-          <div className="pf-arc" style={{ left: "10.5%", right: "11%", top: -62 }}></div>
-          <u>re-run, traced clean</u>
-        </div>
-        <div className="pf-heal-legend">
-          <em>healing is automatic — the human is only notified</em>
-        </div>
       </div>
       <div className="pf-heal">
-        <div className="pf-heal-t">loop 2 &mdash; the generated code broke</div>
+        <div className="pf-heal-t">loop 2 &mdash; the generated reproduction broke</div>
         <div className="pf-heal-row">
           <HBox name="Paper flagged" sub="in the catalog" />
           <Arr /><HBox tool="port" name="Port agent" sub="writes code" />
@@ -95,9 +88,6 @@ export function HealLoops() {
         <div className="pf-heal-return">
           <div className="pf-arc pf-arc--dash" style={{ left: "37%", right: "37%", top: 8 }}></div>
           <u>on failure, retry with the traceback, max 2</u>
-        </div>
-        <div className="pf-heal-legend">
-          <em>the gate is here, not in loop 1</em>
         </div>
       </div>
     </div>

@@ -30,7 +30,11 @@ class PFBoundary extends React.Component {
   }
 }
 
-function TopBar({ mode, updatedAt, awaiting, view, go, signedIn, theme, onTheme }) {
+/* Top bar: logo tile, factory/settings tabs, the "N repros ready" pill and
+   the waitlist CTA. The live/poll chip, theme toggle and sign-in button were
+   removed by design; theme still honours localStorage and the sign-in screen
+   is kept in code but unlinked. */
+function TopBar({ awaiting, view, go }) {
   const tab = (k, label) => (
     <button className="pf-tab" aria-current={view === k || (k === "list" && view === "detail") ? "page" : undefined} onClick={() => go(k)}>{label}</button>
   );
@@ -45,12 +49,6 @@ function TopBar({ mode, updatedAt, awaiting, view, go, signedIn, theme, onTheme 
         </nav>
         <div className="pf-top-right">
           {awaiting > 0 ? <div className="pf-await"><i></i>{awaiting} repros ready</div> : null}
-          <div className="pf-live" data-mode={mode === "fallback" ? "fallback" : "live"}>
-            <i></i>{mode === "fallback" ? "snapshot" : "live"}
-            <span>{PF_POLL_MS / 1000}s</span>
-          </div>
-          <button className="pf-tab" onClick={onTheme}>{theme === "dark" ? "light mode" : "dark mode"}</button>
-          <button className="pf-tab" onClick={() => go("signin")}>{signedIn ? "riley@lab.org" : "sign in"}</button>
           <button className="pf-cta" onClick={() => go("waitlist")}>join the waitlist</button>
         </div>
       </div>
@@ -70,7 +68,7 @@ export default function PaperFactory() {
   const [loadingDetail, setLoadingDetail] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [signedIn, setSignedIn] = React.useState(false);
-  const [theme, setTheme] = React.useState(() => document.documentElement.dataset.pfTheme || "dark");
+  const [theme, setTheme] = React.useState(() => document.documentElement.dataset.pfTheme || "light");
   React.useEffect(() => {
     document.documentElement.dataset.pfTheme = theme;
     try { localStorage.setItem("pf-theme", theme); } catch (e) {}
@@ -130,7 +128,7 @@ export default function PaperFactory() {
 
   return (
     <div className="pf-shell">
-      <TopBar mode={mode} updatedAt={updatedAt} awaiting={awaiting} view={view.name} go={go} signedIn={signedIn} theme={theme} onTheme={() => setTheme(t => (t === "dark" ? "light" : "dark"))} />
+      <TopBar awaiting={awaiting} view={view.name} go={go} />
       <PFBoundary>
         {view.name === "list"
           ? <PipelineScreen list={list} summary={summary} notice={notice} onOpen={open} onWaitlist={() => go("waitlist")} />
