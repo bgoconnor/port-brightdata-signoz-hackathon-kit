@@ -54,6 +54,7 @@ Both paths publish the stable team contract to `data/papers.json` and SQLite to
 - `docs/port-mcp-setup.md` — Port MCP installation, OAuth workaround, and verification.
 - `docs/hackathon-context.md` — pre-kickoff research and historical planning context.
 - `docs/hackathon-plan.md` — generic baseline retained for reference; superseded by `SPEC.md` where they conflict.
+- `src/README.md` — local Minikube deployment and management commands.
 - `skills/hackathon-platform-workflow/` — project-local orchestration skill.
 - `.env.example` — variable names only; never commit real secrets.
 
