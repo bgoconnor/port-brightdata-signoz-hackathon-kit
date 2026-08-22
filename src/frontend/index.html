@@ -3,7 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Paper Factory</title>
+    <title>Research Factory — reproducing new AI research</title>
+    <!-- Pre-paint theme: must run before the module script or light loads
+         flash dark. Mirrors the prototype exactly. -->
+    <script>
+      document.documentElement.dataset.pfTheme =
+        localStorage.getItem("pf-theme") || "light";
+    </script>
   </head>
   <body>
     <div id="root"></div>
