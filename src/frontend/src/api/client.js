@@ -61,7 +61,7 @@ export function normalizePaper(raw) {
     run_output: asString(p.run_output),
     review_note: asString(p.review_note),
     repro_summary: asString(p.repro_summary),
-    evidence_url: asString(p.evidence_url, asString(p.repo_url)),
+    evidence_url: asString(p.evidence_url),
     repro_result:
       result && typeof result === "object"
         ? {

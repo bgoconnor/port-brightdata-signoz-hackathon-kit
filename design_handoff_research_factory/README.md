@@ -79,7 +79,7 @@ authors, age) · right column: status chip + score bar.
   outlined **reject** (optimistic update, reconciled with the API).
 - decided → quiet "approved/rejected by a human…" line; optional reviewer-note block.
 - **THE REPRO** panel: left "what was reproduced" prose + GitHub repo link (GH monogram tile +
-  `github.com/research-factory/repro-<id>`); right rows: paper claims / factory measured /
+  immutable object-store evidence URL); right rows: paper claims / factory measured /
   verdict chip (reproduced = green, not reproduced = red).
 - **Side-by-side frame** (the product's key shot): `ABSTRACT · HUMAN` pane (18.5px/1.66 prose)
   | `GENERATED IMPLEMENTATION · AGENT` pane (syntax-highlighted Python, line numbers, 560px
