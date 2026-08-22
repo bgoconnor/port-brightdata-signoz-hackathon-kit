@@ -43,6 +43,22 @@ make scrape COLLECTOR_ID=c_mt4qssufwcgso7ees
 Both paths publish the stable team contract to `data/papers.json` and SQLite to
 `data/papers.db`.
 
+## Run the integrated Minikube stack
+
+The active application under `src/` includes the Django API, React frontend,
+PostgreSQL, self-hosted SigNoz, and the official SigNoz Kubernetes workload
+collectors:
+
+```bash
+./src/k8s/deploy_minikube.sh
+```
+
+See [`src/README.md`](src/README.md) for Minikube sizing, port-forwarding,
+telemetry coverage, and verification commands.
+
+The local deployment supplies application telemetry and Kubernetes workload
+telemetry; it does not provision a project-specific SigNoz dashboard or alert.
+
 ## Repository contents
 
 - `SPEC.md` — current, authoritative product and implementation specification.
@@ -54,7 +70,7 @@ Both paths publish the stable team contract to `data/papers.json` and SQLite to
 - `docs/port-mcp-setup.md` — Port MCP installation, OAuth workaround, and verification.
 - `docs/hackathon-context.md` — pre-kickoff research and historical planning context.
 - `docs/hackathon-plan.md` — generic baseline retained for reference; superseded by `SPEC.md` where they conflict.
-- `src/README.md` — local Minikube deployment and management commands.
+- `src/README.md` — integrated application, SigNoz, and Kubernetes workload monitoring runbook.
 - `skills/hackathon-platform-workflow/` — project-local orchestration skill.
 - `.env.example` — variable names only; never commit real secrets.
 

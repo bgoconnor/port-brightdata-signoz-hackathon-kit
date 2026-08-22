@@ -1,0 +1,49 @@
+# Local Minikube workload monitoring for the official SigNoz k8s-infra chart.
+global:
+  cloud: others
+  clusterName: minikube
+  deploymentEnvironment: local
+
+otelCollectorEndpoint: http://signoz-otel-collector.hackathon.svc.cluster.local:4318
+otelInsecure: true
+
+presets:
+  otlphttpExporter:
+    enabled: true
+  hostMetrics:
+    enabled: true
+    collectionInterval: 30s
+  kubeletMetrics:
+    enabled: true
+    collectionInterval: 30s
+    insecureSkipVerify: true
+  kubernetesAttributes:
+    enabled: true
+  clusterMetrics:
+    enabled: true
+    collectionInterval: 30s
+  k8sEvents:
+    enabled: true
+    namespaces:
+      - hackathon
+  logsCollection:
+    enabled: true
+    startAt: end
+    whitelist:
+      enabled: true
+      signozLogs: false
+      namespaces:
+        - hackathon
+      pods: []
+      containers: []
+    blacklist:
+      enabled: true
+      signozLogs: true
+      namespaces: []
+      pods:
+        - signoz
+        - chi-signoz
+      # Backend logs are already exported by the Python OTel SDK. Excluding the
+      # container log file prevents duplicate records in SigNoz.
+      containers:
+        - backend

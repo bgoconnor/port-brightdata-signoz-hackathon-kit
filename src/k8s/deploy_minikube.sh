@@ -41,3 +41,4 @@ kubectl -n hackathon rollout status deployment/hackathon-frontend
 
 echo "Run: kubectl -n hackathon port-forward service/hackathon-frontend 5173:5173"
 echo "SigNoz: kubectl -n hackathon port-forward service/signoz 8080:8080"
+echo "Workloads: open SigNoz and select Infrastructure -> Kubernetes"

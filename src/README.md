@@ -35,9 +35,26 @@ Build and deploy the frontend, backend, PostgreSQL, and SigNoz:
 ```
 
 The script creates the `hackathon` namespace, deploys the application, and runs
-the default Django migrations. It installs the pinned official SigNoz Helm chart
-in the same namespace. The Django service exports its HTTP, database, and Bright
-Data traces, application metrics, and trace-correlated logs directly over OTLP.
+the default Django migrations. It installs two pinned official Helm charts in
+the same namespace:
+
+- `signoz/signoz` provides the SigNoz UI, ingest collector, and telemetry store.
+- `signoz/k8s-infra` provides a node-local collector plus a cluster collector for
+  Kubernetes metrics, events, and selected container logs.
+
+The default pinned chart versions are `0.138.0` for `signoz/signoz` and `0.17.0`
+for `signoz/k8s-infra`. Override them with `SIGNOZ_CHART_VERSION` and
+`SIGNOZ_K8S_INFRA_CHART_VERSION` when deliberately testing an upgrade.
+
+The Django backend sends OpenTelemetry data to the node-local collector, which
+adds Kubernetes metadata before forwarding it to SigNoz. Automatic
+instrumentation covers Django requests, PostgreSQL calls, Bright Data HTTP calls,
+Python process metrics, and trace-correlated application logs.
+
+The workload collectors monitor node, pod, container, deployment, StatefulSet,
+and DaemonSet health. Container-file logs are limited to the `hackathon`
+namespace; backend container logs are excluded there because the Python SDK
+already exports them directly.
 
 To update only SigNoz, run:
 
@@ -45,7 +62,8 @@ To update only SigNoz, run:
 ./src/k8s/deploy_signoz.sh
 ```
 
-To rebuild the application without waiting for the SigNoz Helm releases, run:
+After the initial SigNoz installation, rebuild the application without updating
+either SigNoz Helm release with:
 
 ```bash
 HACKATHON_SKIP_SIGNOZ=1 ./src/k8s/deploy_minikube.sh
@@ -93,20 +111,40 @@ curl -fsS http://localhost:8000/api/scrape-runs/ | python -m json.tool
 In SigNoz, look for:
 
 - `hackathon-backend` under Services and Traces.
-- Django HTTP metrics in Metrics Explorer, filtered by
+- HTTP, PostgreSQL, and Bright Data child spans carrying `k8s.*` resource
+  attributes.
+- application metrics and logs filtered by
   `service.name = hackathon-backend`.
-- application logs filtered by `service.name = hackathon-backend`.
+- nodes, pods, containers, deployments, StatefulSets, and DaemonSets under
+  **Infrastructure -> Kubernetes** with cluster `minikube` and environment
+  `local`.
+- Kubernetes events and frontend/PostgreSQL container logs under Logs.
+
+Browser-side React telemetry and PostgreSQL server-specific metrics are not
+instrumented; PostgreSQL activity is visible through the backend's client spans
+and the pod/container workload metrics.
+
+This deployment sends application and Kubernetes telemetry into SigNoz but does
+not provision a project-specific dashboard or alert rule.
 
 ## Check status and logs
 
 ```bash
-kubectl -n hackathon get deployments,pods,services
+kubectl -n hackathon get deployments,statefulsets,daemonsets,pods,services
+helm list -n hackathon
 kubectl -n hackathon logs -f deployment/hackathon-backend
 kubectl -n hackathon logs -f deployment/hackathon-frontend
 kubectl -n hackathon logs -f deployment/hackathon-postgres
-kubectl -n hackathon get pods
 kubectl -n hackathon logs deployment/signoz-otel-collector --tail=100
+kubectl -n hackathon logs daemonset/signoz-k8s-infra-otel-agent --tail=100
+kubectl -n hackathon logs deployment/signoz-k8s-infra-otel-deployment --tail=100
 ```
+
+The deployment follows SigNoz's official
+[local Kubernetes installation](https://signoz.io/docs/install/kubernetes/local/)
+and [K8s Infra installation](https://signoz.io/docs/opentelemetry-collection-agents/k8s/k8s-infra/install-k8s-infra/)
+guides. Use `deploy_signoz.sh` for upgrades because it also applies the local
+pre-sign-up collector configuration required by this deployment.
 
 Use `Ctrl-C` to stop following logs or to stop a port-forward.
 

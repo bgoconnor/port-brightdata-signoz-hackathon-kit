@@ -90,12 +90,36 @@ spec:
               value: c_mt4qssufwcgso7ees
             - name: DJANGO_SETTINGS_MODULE
               value: config.settings
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: K8S_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: K8S_POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+            - name: K8S_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: K8S_NAMESPACE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: K8S_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
             - name: OTEL_SERVICE_NAME
               value: hackathon-backend
             - name: OTEL_RESOURCE_ATTRIBUTES
-              value: service.namespace=paper-factory,service.version=local,deployment.environment=local
+              value: service.namespace=paper-factory,service.version=local,deployment.environment=local,k8s.pod.ip=$(K8S_POD_IP),k8s.pod.uid=$(K8S_POD_UID),k8s.pod.name=$(K8S_POD_NAME),k8s.namespace.name=$(K8S_NAMESPACE_NAME),k8s.node.name=$(K8S_NODE_NAME)
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: http://signoz-otel-collector.hackathon.svc.cluster.local:4318
+              value: http://$(HOST_IP):4318
             - name: OTEL_EXPORTER_OTLP_PROTOCOL
               value: http/protobuf
             - name: OTEL_TRACES_EXPORTER
