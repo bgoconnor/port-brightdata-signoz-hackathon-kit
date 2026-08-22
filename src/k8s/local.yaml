@@ -31,6 +31,15 @@ spec:
               value: hackathon
           ports:
             - containerPort: 5432
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - hackathon
+                - -d
+                - hackathon
+            periodSeconds: 2
 ---
 apiVersion: v1
 kind: Service
@@ -72,6 +81,35 @@ spec:
               value: hackathon
             - name: POSTGRES_PASSWORD
               value: hackathon
+            - name: BRIGHTDATA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hackathon-brightdata
+                  key: BRIGHTDATA_API_KEY
+            - name: BRIGHTDATA_COLLECTOR_ID
+              value: c_mt4qssufwcgso7ees
+            - name: DJANGO_SETTINGS_MODULE
+              value: config.settings
+            - name: OTEL_SERVICE_NAME
+              value: hackathon-backend
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: service.namespace=paper-factory,service.version=local,deployment.environment=local
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://signoz-otel-collector.signoz.svc.cluster.local:4318
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: http/protobuf
+            - name: OTEL_TRACES_EXPORTER
+              value: otlp
+            - name: OTEL_METRICS_EXPORTER
+              value: otlp
+            - name: OTEL_LOGS_EXPORTER
+              value: none
+            - name: OTEL_METRIC_EXPORT_INTERVAL
+              value: "10000"
+            - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
+              value: delta
+            - name: OTEL_PYTHON_LOG_CORRELATION
+              value: "true"
           ports:
             - containerPort: 8000
 ---
@@ -106,6 +144,9 @@ spec:
         - name: frontend
           image: hackathon-frontend:local
           imagePullPolicy: Never
+          env:
+            - name: VITE_API_PROXY_TARGET
+              value: http://hackathon-backend:8000
           ports:
             - containerPort: 5173
 ---
