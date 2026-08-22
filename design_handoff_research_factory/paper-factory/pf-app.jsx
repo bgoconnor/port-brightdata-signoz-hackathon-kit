@@ -33,12 +33,7 @@ function TopBar({ mode, updatedAt, awaiting, view, go, signedIn, theme, onTheme 
         </nav>
         <div className="pf-top-right">
           {awaiting > 0 ? <div className="pf-await"><i></i>{awaiting} repros ready</div> : null}
-          <div className="pf-live" data-mode={mode === "fallback" ? "fallback" : "live"}>
-            <i></i>{mode === "fallback" ? "snapshot" : "live"}
-            <span>{PF_POLL_MS / 1000}s</span>
-          </div>
           <button className="pf-tab" onClick={onTheme}>{theme === "dark" ? "light mode" : "dark mode"}</button>
-          <button className="pf-tab" onClick={() => go("signin")}>{signedIn ? "riley@lab.org" : "sign in"}</button>
           <button className="pf-cta" onClick={() => go("waitlist")}>join the waitlist</button>
         </div>
       </div>
