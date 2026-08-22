@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 from datetime import datetime
@@ -31,18 +32,30 @@ class BrightDataError(RuntimeError):
 
 
 def _configuration() -> tuple[str, str, str]:
-    api_key = os.environ.get('BRIGHTDATA_API_KEY', '').strip()
+    api_key = _api_key()
     collector_id = os.environ.get('BRIGHTDATA_COLLECTOR_ID', '').strip()
     target_url = os.environ.get('BRIGHTDATA_TARGET_URL', DEFAULT_TARGET_URL).strip()
-    if not api_key:
-        raise BrightDataError('BRIGHTDATA_API_KEY is not configured')
     if not collector_id:
         raise BrightDataError('BRIGHTDATA_COLLECTOR_ID is not configured')
     return api_key, collector_id, target_url
 
 
+def _api_key() -> str:
+    api_key = os.environ.get('BRIGHTDATA_API_KEY', '').strip()
+    if not api_key:
+        raise BrightDataError('BRIGHTDATA_API_KEY is not configured')
+    return api_key
+
+
+def _fulltext_collector_id() -> str:
+    collector_id = os.environ.get('BRIGHTDATA_FULLTEXT_COLLECTOR_ID', '').strip()
+    if not collector_id:
+        raise BrightDataError('BRIGHTDATA_FULLTEXT_COLLECTOR_ID is not configured')
+    return collector_id
+
+
 def _request(method: str, path: str, payload: Any = None) -> bytes:
-    api_key, _, _ = _configuration()
+    api_key = _api_key()
     headers = {'Authorization': f'Bearer {api_key}'}
     data = None
     if payload is not None:
@@ -140,6 +153,77 @@ def start_scrape() -> ScrapeRun:
     return run
 
 
+def start_enrichment(paper: Paper) -> ScrapeRun:
+    """Trigger the hosted full-text collector for one already-discovered paper."""
+    collector_id = _fulltext_collector_id()
+    target_url = f'https://arxiv.org/html/{paper.arxiv_id}'
+    run = ScrapeRun.objects.create(
+        collector_id=collector_id,
+        target_url=target_url,
+        kind=ScrapeRun.Kind.ENRICHMENT,
+        paper=paper,
+    )
+    try:
+        query = urlencode({'collector': collector_id, 'queue_next': 1})
+        response = _request_json('POST', f'/dca/trigger?{query}', [{'url': target_url}])
+        run.bright_job_id = response['collection_id']
+        run.status = ScrapeRun.Status.COLLECTING
+        run.save(update_fields=('bright_job_id', 'status', 'updated_at'))
+    except (BrightDataError, KeyError, TypeError) as error:
+        _fail_run(run, error)
+    return run
+
+
+def _extract_full_text(response: Any) -> str:
+    records = response if isinstance(response, list) else [response]
+    if not records or not isinstance(records[0], dict):
+        raise BrightDataError('Full-text collector returned an invalid dataset')
+    record = records[0]
+    text = record.get('full_text') or record.get('markdown') or record.get('content')
+    if not isinstance(text, str) or len(text.strip()) < 1000:
+        raise BrightDataError('Full-text collector returned too little paper content')
+    return text.strip()
+
+
+def _ingest_enrichment(run: ScrapeRun) -> ScrapeRun:
+    if run.paper_id is None:
+        raise BrightDataError('Enrichment run is not associated with a paper')
+    run.status = ScrapeRun.Status.INGESTING
+    run.save(update_fields=('status', 'updated_at'))
+    response = _request_json('GET', f'/dca/dataset?{urlencode({"id": run.bright_job_id})}')
+    if isinstance(response, dict) and 'status' in response and not any(
+        field in response for field in ('full_text', 'markdown', 'content')
+    ):
+        run.status = ScrapeRun.Status.COLLECTING
+        run.bright_status = str(response.get('status') or run.bright_status)
+        run.save(update_fields=('status', 'bright_status', 'updated_at'))
+        return run
+
+    text = _extract_full_text(response)
+    acquired_at = run.bright_finished_at or timezone.now()
+    with transaction.atomic():
+        paper = Paper.objects.select_for_update().get(pk=run.paper_id)
+        paper.full_text = text
+        paper.full_text_source_url = run.target_url
+        paper.full_text_sha256 = hashlib.sha256(text.encode()).hexdigest()
+        paper.full_text_acquired_at = acquired_at
+        paper.full_text_collection_id = run.bright_job_id or ''
+        paper.save(update_fields=(
+            'full_text', 'full_text_source_url', 'full_text_sha256',
+            'full_text_acquired_at', 'full_text_collection_id',
+        ))
+        run.records_received = 1
+        run.records_written = 1
+        run.status = ScrapeRun.Status.COMPLETED
+        run.completed_at = timezone.now()
+        run.error = ''
+        run.save(update_fields=(
+            'records_received', 'records_written', 'status', 'completed_at',
+            'error', 'updated_at',
+        ))
+    return run
+
+
 def _ingest_results(run: ScrapeRun) -> ScrapeRun:
     run.status = ScrapeRun.Status.INGESTING
     run.error = ''
@@ -201,6 +285,8 @@ def refresh_scrape(run: ScrapeRun) -> ScrapeRun:
                 'bright_status', 'records_received', 'failure_count',
                 'bright_started_at', 'bright_finished_at', 'updated_at',
             ))
+            if run.kind == ScrapeRun.Kind.ENRICHMENT:
+                return _ingest_enrichment(run)
             return _ingest_results(run)
         if bright_status == 'paused':
             run.status = ScrapeRun.Status.PAUSED

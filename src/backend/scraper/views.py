@@ -4,12 +4,14 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from .models import Paper, ScrapeRun
-from .services import control_scrape, refresh_scrape, start_scrape
+from .services import control_scrape, refresh_scrape, start_enrichment, start_scrape
 
 
 def _serialize_run(run: ScrapeRun) -> dict:
     return {
         'id': run.id,
+        'kind': run.kind,
+        'paper': run.paper_id,
         'collector_id': run.collector_id,
         'target_url': run.target_url,
         'bright_job_id': run.bright_job_id,
@@ -41,6 +43,12 @@ def papers(request):
             'reproducible': paper.reproducible,
             'scraped_at': paper.scraped_at.isoformat(),
             'url': f'https://arxiv.org/abs/{paper.arxiv_id}',
+            'enriched': bool(paper.full_text),
+            'full_text_source_url': paper.full_text_source_url,
+            'full_text_sha256': paper.full_text_sha256,
+            'full_text_acquired_at': (
+                paper.full_text_acquired_at.isoformat() if paper.full_text_acquired_at else None
+            ),
         }
         for paper in queryset
     ]
@@ -69,4 +77,13 @@ def scrape_run_action(request, run_id: int, action: str):
     else:
         return JsonResponse({'error': f'Unsupported action: {action}'}, status=400)
     status = 200 if run.status != ScrapeRun.Status.FAILED else 502
+    return JsonResponse({'run': _serialize_run(run)}, status=status)
+
+
+@csrf_exempt
+@require_POST
+def enrich_paper(request, arxiv_id: str):
+    paper = get_object_or_404(Paper, pk=arxiv_id)
+    run = start_enrichment(paper)
+    status = 201 if run.status != ScrapeRun.Status.FAILED else 502
     return JsonResponse({'run': _serialize_run(run)}, status=status)

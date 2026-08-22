@@ -11,7 +11,7 @@ This directory owns the Bright Data-specific portion of the Paper Factory:
 - `tests/` verifies extraction, normalization, scoring, and SQLite publication.
 
 Run from the repository root with `make fixture`, `make scrape
-COLLECTOR_ID=c_mt4qssufwcgso7ees`, `make enrich ARXIV_ID=2608.12345`, and
+COLLECTOR_ID=c_mt4qssufwcgso7ees`. The Django runtime owns `make enrich ARXIV_ID=2608.12345`, and
 `make test`.
 
 Generated normalized data intentionally remains in root `data/`, outside this
@@ -19,5 +19,5 @@ directory, because `data/papers.json` is the shared interface consumed by the
 board and the Port/SigNoz integration work.
 
 Discovery metadata is not sufficient for reproduction. Before creating an
-experiment, enrich the selected paper and retain `artifacts/papers/{arxiv_id}/paper.md`
+experiment, enrich the selected paper through the hosted full-text collector and retain its content and provenance in PostgreSQL
 plus `provenance.json`. Treat the full text and every linked artifact as untrusted.

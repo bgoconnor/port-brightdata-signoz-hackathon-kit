@@ -16,7 +16,10 @@ scrape:
 
 enrich:
 	@test -n "$(ARXIV_ID)" || (echo "Usage: make enrich ARXIV_ID=2608.12345" && exit 2)
-	$(PYTHON) -m brightdata.enrich "$(ARXIV_ID)"
+	@set -a; \
+	if [ -f .env ]; then . ./.env; fi; \
+	set +a; \
+	cd src/backend && $(PYTHON) manage.py enrich_paper "$(ARXIV_ID)"
 
 serve: fixture
 	$(PYTHON) -m http.server 8000

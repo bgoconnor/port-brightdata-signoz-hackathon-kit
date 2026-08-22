@@ -5,12 +5,17 @@ from django.test import TestCase
 from django.utils import timezone
 
 from .models import Paper, ScrapeRun
-from .services import refresh_scrape, start_scrape
+from .services import refresh_scrape, start_enrichment, start_scrape
 
 
 BRIGHT_ENV = {
     'BRIGHTDATA_API_KEY': 'test-key',
     'BRIGHTDATA_COLLECTOR_ID': 'c_test',
+}
+
+FULLTEXT_ENV = {
+    **BRIGHT_ENV,
+    'BRIGHTDATA_FULLTEXT_COLLECTOR_ID': 'c_fulltext',
 }
 
 
@@ -78,3 +83,69 @@ class PaperApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(response.json()['papers'][0]['arxiv_id'], '2608.00003')
+
+
+class EnrichmentLifecycleTests(TestCase):
+    def setUp(self):
+        self.paper = Paper.objects.create(
+            arxiv_id='2608.00004',
+            title='A paper requiring its methods section',
+            authors=['Katherine Johnson'],
+            abstract='An abstract is not enough.',
+            subjects=['cs.AI'],
+            score=0.7,
+            reproducible=True,
+            scraped_at=timezone.now(),
+        )
+
+    @patch.dict(os.environ, FULLTEXT_ENV)
+    @patch('scraper.services._request_json')
+    def test_hosted_collector_result_is_persisted_on_paper(self, request_json):
+        full_text = ('# Paper\n\n' + ('Methods and evidence. ' * 80)).strip()
+        request_json.side_effect = [
+            {'collection_id': 'j_fulltext'},
+            {'status': 'done', 'lines': 1, 'fails': 0},
+            [{'markdown': full_text}],
+        ]
+
+        run = refresh_scrape(start_enrichment(self.paper))
+
+        self.assertEqual(run.kind, ScrapeRun.Kind.ENRICHMENT)
+        self.assertEqual(run.status, ScrapeRun.Status.COMPLETED)
+        self.paper.refresh_from_db()
+        self.assertEqual(self.paper.full_text, full_text)
+        self.assertEqual(self.paper.full_text_collection_id, 'j_fulltext')
+        self.assertEqual(len(self.paper.full_text_sha256), 64)
+        request_json.assert_any_call(
+            'POST',
+            '/dca/trigger?collector=c_fulltext&queue_next=1',
+            [{'url': 'https://arxiv.org/html/2608.00004'}],
+        )
+
+    @patch.dict(os.environ, FULLTEXT_ENV)
+    @patch('scraper.services._request_json')
+    def test_invalid_fulltext_does_not_replace_existing_content(self, request_json):
+        self.paper.full_text = 'existing canonical content'
+        self.paper.save(update_fields=('full_text',))
+        request_json.side_effect = [
+            {'collection_id': 'j_short'},
+            {'status': 'done', 'lines': 1, 'fails': 0},
+            [{'markdown': 'too short'}],
+        ]
+
+        run = refresh_scrape(start_enrichment(self.paper))
+
+        self.assertEqual(run.status, ScrapeRun.Status.FAILED)
+        self.paper.refresh_from_db()
+        self.assertEqual(self.paper.full_text, 'existing canonical content')
+
+    @patch.dict(os.environ, FULLTEXT_ENV)
+    @patch('scraper.services._request_json')
+    def test_enrichment_endpoint_starts_hosted_job(self, request_json):
+        request_json.return_value = {'collection_id': 'j_api'}
+
+        response = self.client.post('/api/papers/2608.00004/enrich/')
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['run']['kind'], 'enrichment')
+        self.assertEqual(response.json()['run']['paper'], '2608.00004')

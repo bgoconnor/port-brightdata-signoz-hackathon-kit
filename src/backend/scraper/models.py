@@ -12,9 +12,18 @@ class Paper(models.Model):
     score = models.FloatField()
     reproducible = models.BooleanField()
     scraped_at = models.DateTimeField()
+    full_text = models.TextField(blank=True)
+    full_text_source_url = models.URLField(max_length=500, blank=True)
+    full_text_sha256 = models.CharField(max_length=64, blank=True)
+    full_text_acquired_at = models.DateTimeField(null=True, blank=True)
+    full_text_collection_id = models.CharField(max_length=64, blank=True)
 
 
 class ScrapeRun(models.Model):
+    class Kind(models.TextChoices):
+        DISCOVERY = 'discovery', 'Discovery'
+        ENRICHMENT = 'enrichment', 'Enrichment'
+
     class Status(models.TextChoices):
         SUBMITTED = 'submitted', 'Submitted'
         COLLECTING = 'collecting', 'Collecting'
@@ -25,6 +34,10 @@ class ScrapeRun(models.Model):
         CANCELED = 'canceled', 'Canceled'
 
     collector_id = models.CharField(max_length=64)
+    kind = models.CharField(max_length=16, choices=Kind.choices, default=Kind.DISCOVERY)
+    paper = models.ForeignKey(
+        Paper, null=True, blank=True, on_delete=models.CASCADE, related_name='scrape_runs'
+    )
     target_url = models.URLField(max_length=500)
     bright_job_id = models.CharField(max_length=64, unique=True, null=True, blank=True)
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.SUBMITTED)

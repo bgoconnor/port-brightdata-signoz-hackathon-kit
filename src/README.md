@@ -17,8 +17,10 @@ resources when your current profile is smaller:
 minikube start --memory=8g --cpus=4 --disk-size=30g
 ```
 
-The root `.env` must contain `BRIGHTDATA_API_KEY`. The deploy script loads that
-file and creates or updates the `hackathon-brightdata` Kubernetes Secret.
+The root `.env` must contain `BRIGHTDATA_API_KEY`, `BRIGHTDATA_COLLECTOR_ID`, and
+the hosted full-text scraper's `BRIGHTDATA_FULLTEXT_COLLECTOR_ID`. The deploy
+script loads them and creates or updates the `hackathon-brightdata` Kubernetes
+Secret.
 
 ## Start the project
 

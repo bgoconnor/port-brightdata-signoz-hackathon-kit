@@ -87,7 +87,15 @@ spec:
                   name: hackathon-brightdata
                   key: BRIGHTDATA_API_KEY
             - name: BRIGHTDATA_COLLECTOR_ID
-              value: c_mt4qssufwcgso7ees
+              valueFrom:
+                secretKeyRef:
+                  name: hackathon-brightdata
+                  key: BRIGHTDATA_COLLECTOR_ID
+            - name: BRIGHTDATA_FULLTEXT_COLLECTOR_ID
+              valueFrom:
+                secretKeyRef:
+                  name: hackathon-brightdata
+                  key: BRIGHTDATA_FULLTEXT_COLLECTOR_ID
             - name: DJANGO_SETTINGS_MODULE
               value: config.settings
             - name: OTEL_SERVICE_NAME
