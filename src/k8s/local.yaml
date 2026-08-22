@@ -1,0 +1,122 @@
+# Local Minikube only. Production will use a separate manifest.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hackathon
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hackathon-postgres
+  namespace: hackathon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hackathon-postgres
+  template:
+    metadata:
+      labels:
+        app: hackathon-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17-alpine
+          env:
+            - name: POSTGRES_DB
+              value: hackathon
+            - name: POSTGRES_USER
+              value: hackathon
+            - name: POSTGRES_PASSWORD
+              value: hackathon
+          ports:
+            - containerPort: 5432
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hackathon-postgres
+  namespace: hackathon
+spec:
+  selector:
+    app: hackathon-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hackathon-backend
+  namespace: hackathon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hackathon-backend
+  template:
+    metadata:
+      labels:
+        app: hackathon-backend
+    spec:
+      containers:
+        - name: backend
+          image: hackathon-backend:local
+          imagePullPolicy: Never
+          env:
+            - name: POSTGRES_HOST
+              value: hackathon-postgres
+            - name: POSTGRES_DB
+              value: hackathon
+            - name: POSTGRES_USER
+              value: hackathon
+            - name: POSTGRES_PASSWORD
+              value: hackathon
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hackathon-backend
+  namespace: hackathon
+spec:
+  selector:
+    app: hackathon-backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hackathon-frontend
+  namespace: hackathon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hackathon-frontend
+  template:
+    metadata:
+      labels:
+        app: hackathon-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: hackathon-frontend:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5173
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hackathon-frontend
+  namespace: hackathon
+spec:
+  selector:
+    app: hackathon-frontend
+  ports:
+    - port: 5173
+      targetPort: 5173
