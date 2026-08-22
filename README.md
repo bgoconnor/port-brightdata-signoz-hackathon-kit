@@ -30,6 +30,7 @@ Port -> catalog, governance, scorecards, and workflows
 - `docs/port-mcp-setup.md` — Port MCP installation, OAuth workaround, and verification.
 - `docs/hackathon-context.md` — event constraints, judging criteria, architecture, and scope.
 - `docs/hackathon-plan.md` — recommended architecture and demo milestones.
+- `src/README.md` — local Minikube deployment and management commands.
 - `skills/hackathon-platform-workflow/` — project-local orchestration skill.
 - `.env.example` — variable names only; never commit real secrets.
 
