@@ -1,3 +1,4 @@
+import json
 import os
 from unittest.mock import patch
 
@@ -121,3 +122,41 @@ class MultiSourceTests(TestCase):
         self.assertEqual(run.collector_id, 'c_anthropic')
         self.assertEqual(run.target_url, 'https://www.anthropic.com/research')
         request_json.assert_called_once()
+
+
+class PortHelloApiTests(TestCase):
+    def setUp(self):
+        self.paper = Paper.objects.create(
+            paper_id='arxiv:2608.00004',
+            source='arxiv',
+            source_id='2608.00004',
+            arxiv_id='2608.00004',
+            title='A Port hello paper',
+            authors=['Test Author'],
+            abstract='An abstract',
+            subjects=['cs.AI'],
+            score=0.5,
+            reproducible=True,
+            scraped_at=timezone.now(),
+        )
+
+    @patch('scraper.views.create_port_hello_job', return_value='port-hello-123456789abc')
+    def test_post_creates_kubernetes_job(self, create_job):
+        response = self.client.post(
+            '/api/port-hello/',
+            data=json.dumps({'paper_id': self.paper.paper_id}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.json()['job_name'], 'port-hello-123456789abc')
+        create_job.assert_called_once_with(self.paper.paper_id)
+
+    def test_unknown_paper_returns_not_found(self):
+        response = self.client.post(
+            '/api/port-hello/',
+            data=json.dumps({'paper_id': 'arxiv:missing'}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 404)

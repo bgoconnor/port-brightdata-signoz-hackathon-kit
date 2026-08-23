@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from .models import Paper, ScrapeRun
+from .port_job import KubernetesJobError, create_port_hello_job
 from .services import BrightDataError, control_scrape, refresh_scrape, start_scrape
 
 
@@ -93,3 +94,25 @@ def scrape_run_action(request, run_id: int, action: str):
         return JsonResponse({'error': f'Unsupported action: {action}'}, status=400)
     status = 200 if run.status != ScrapeRun.Status.FAILED else 502
     return JsonResponse({'run': _serialize_run(run)}, status=status)
+
+
+@csrf_exempt
+@require_POST
+def port_hello(request):
+    try:
+        payload = json.loads(request.body or b'{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Request body must be valid JSON'}, status=400)
+    paper_id = str(payload.get('paper_id') or '').strip()
+    if not paper_id:
+        return JsonResponse({'error': 'paper_id is required'}, status=400)
+    paper = get_object_or_404(Paper, pk=paper_id)
+    try:
+        job_name = create_port_hello_job(paper.paper_id)
+    except KubernetesJobError as error:
+        return JsonResponse({'error': str(error)}, status=502)
+    return JsonResponse({
+        'paper_id': paper.paper_id,
+        'job_name': job_name,
+        'status': 'queued',
+    }, status=202)

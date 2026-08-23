@@ -22,6 +22,14 @@ class Migration(migrations.Migration):
             model_name='paper', name='paper_id',
             field=models.CharField(max_length=300, primary_key=True, serialize=False),
         ),
+        migrations.RunSQL(
+            'ALTER INDEX IF EXISTS scraper_paper_arxiv_id_d1c44e9b_like '
+            'RENAME TO scraper_paper_paper_id_like',
+            reverse_sql=(
+                'ALTER INDEX IF EXISTS scraper_paper_paper_id_like '
+                'RENAME TO scraper_paper_arxiv_id_d1c44e9b_like'
+            ),
+        ),
         migrations.AddField(model_name='paper', name='source', field=models.CharField(default='arxiv', max_length=32)),
         migrations.AddField(
             model_name='paper', name='source_id',
