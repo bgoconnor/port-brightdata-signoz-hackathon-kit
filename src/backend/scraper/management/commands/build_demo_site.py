@@ -23,7 +23,12 @@ def _validate_html(html):
     for required in ('<!doctype html', '<html', '<body', '</html>'):
         if required not in lowered:
             errors.append(f'Missing required document marker: {required}')
-    if re.search(r'''(?:src|href)\s*=\s*["'](?:https?:)?//''', html, re.I):
+    external_resource = (
+        re.search(r'''src\s*=\s*["'](?:https?:)?//''', html, re.I)
+        or re.search(r'''<link\b[^>]*href\s*=\s*["'](?:https?:)?//''', html, re.I)
+        or re.search(r'''url\(\s*["']?(?:https?:)?//''', html, re.I)
+    )
+    if external_resource:
         errors.append('External network asset detected; all assets must be inline.')
     if '<script' not in lowered:
         errors.append('No interactive JavaScript was provided.')

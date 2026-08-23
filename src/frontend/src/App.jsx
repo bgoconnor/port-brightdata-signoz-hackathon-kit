@@ -8,7 +8,7 @@ import { Notice } from "./components/ui.jsx";
 import { PipelineScreen } from "./components/list.jsx";
 import { DetailScreen } from "./components/detail.jsx";
 import { SettingsScreen, SignInScreen, WaitlistScreen } from "./components/account.jsx";
-import { fetchPaper, fetchPapers, fetchSummary, submitReview } from "./api/client.js";
+import { buildDemoSite, fetchPaper, fetchPapers, fetchSummary, submitReview } from "./api/client.js";
 
 /* Paper Factory — root: routing, polling, degradation handling. */
 
@@ -68,6 +68,7 @@ export default function PaperFactory() {
   const [detailNotice, setDetailNotice] = React.useState(null);
   const [loadingDetail, setLoadingDetail] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
+  const [demoBusy, setDemoBusy] = React.useState(false);
   const [signedIn, setSignedIn] = React.useState(false);
   const [theme, setTheme] = React.useState(() => document.documentElement.dataset.pfTheme || "light");
   React.useEffect(() => {
@@ -124,6 +125,31 @@ export default function PaperFactory() {
     }).catch(() => { setBusy(false); setDetailNotice("The decision could not be sent to the API. It is applied locally only."); });
   }, [poll]);
 
+  const buildDemo = React.useCallback(() => {
+    const id = viewRef.current.id;
+    if (!id) return;
+    setDemoBusy(true);
+    setDetailNotice(null);
+    buildDemoSite(id).then(result => {
+      setDetail(d => d ? Object.assign({}, d, {
+        demo_site: {
+          status: result.status || "queued",
+          summary: "",
+          iteration: 0,
+          port_workflow_run_id: "",
+          job_name: result.job_name || "",
+          error: "",
+          site_url: "",
+        },
+      }) : d);
+      setDemoBusy(false);
+      poll();
+    }).catch(error => {
+      setDemoBusy(false);
+      setDetailNotice("The demo-site job could not be started (" + (error?.message || "error") + ").");
+    });
+  }, [poll]);
+
   const awaiting = list.filter(p => p.status === "awaiting_review").length;
   const stub = view.id ? list.find(p => p.paper_id === view.id) : null;
 
@@ -134,7 +160,7 @@ export default function PaperFactory() {
         {view.name === "list"
           ? <PipelineScreen list={list} summary={summary} notice={notice} onOpen={open} onWaitlist={() => go("waitlist")} />
           : view.name === "detail"
-            ? <DetailScreen paper={detail} stub={stub} notice={detailNotice} loading={loadingDetail} onBack={back} onDecide={decide} busy={busy} />
+            ? <DetailScreen paper={detail} stub={stub} notice={detailNotice} loading={loadingDetail} onBack={back} onDecide={decide} busy={busy} demoBusy={demoBusy} onBuildDemo={buildDemo} />
             : view.name === "waitlist"
               ? <WaitlistScreen onBack={back} />
               : view.name === "signin"
@@ -144,4 +170,3 @@ export default function PaperFactory() {
     </div>
   );
 }
-

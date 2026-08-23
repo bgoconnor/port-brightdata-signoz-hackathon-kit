@@ -189,6 +189,14 @@ class DemoSiteApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'text/html; charset=utf-8')
         self.assertIn("default-src 'none'", response['Content-Security-Policy'])
+        self.assertEqual(response['X-Frame-Options'], 'SAMEORIGIN')
+
+        detail = self.client.get(f'/api/papers/{self.paper.paper_id}/').json()
+        self.assertEqual(detail['demo_site']['status'], DemoSite.Status.READY)
+        self.assertEqual(
+            detail['demo_site']['site_url'],
+            f'/api/demo-sites/{self.paper.paper_id}/',
+        )
 
     def test_validator_rejects_external_assets(self):
         html = (
@@ -202,3 +210,13 @@ class DemoSiteApiTests(TestCase):
             'External network asset detected; all assets must be inline.',
             _validate_html(html),
         )
+
+    def test_validator_allows_external_citation_links(self):
+        html = (
+            '<!doctype html><html><body>'
+            '<a href="https://arxiv.org/abs/2608.19202">paper</a><script>document.body.dataset.ready="1"</script>'
+            + ('interactive explanation ' * 50)
+            + '</body></html>'
+        )
+
+        self.assertEqual(_validate_html(html), [])

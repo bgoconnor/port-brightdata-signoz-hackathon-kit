@@ -2,6 +2,7 @@ import json
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from .models import Attempt, DemoSite, Paper, Reproduction, ScrapeRun
@@ -76,6 +77,24 @@ def _serialize_attempt(attempt: Attempt) -> dict:
 def _serialize_detail(paper: Paper) -> dict:
     """Detail-shape paper per API.md: list fields plus reproduction evidence."""
     data = _serialize_paper(paper)
+    site = getattr(paper, 'demo_site', None)
+    data['demo_site'] = (
+        {
+            'status': site.status,
+            'summary': site.summary,
+            'iteration': site.iteration,
+            'port_workflow_run_id': site.port_workflow_run_id,
+            'job_name': site.job_name,
+            'error': site.error,
+            'site_url': (
+                f'/api/demo-sites/{paper.paper_id}/'
+                if site.status == DemoSite.Status.READY
+                else None
+            ),
+        }
+        if site is not None
+        else None
+    )
     repro = getattr(paper, 'reproduction', None)
     if repro is None:
         data.update(
@@ -264,6 +283,7 @@ def demo_site_status(request, paper_id: str):
 
 
 @require_GET
+@xframe_options_sameorigin
 def demo_site(request, paper_id: str):
     paper = get_object_or_404(Paper, pk=paper_id)
     site = get_object_or_404(DemoSite, paper=paper, status=DemoSite.Status.READY)
