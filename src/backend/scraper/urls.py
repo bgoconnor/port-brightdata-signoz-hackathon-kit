@@ -14,5 +14,8 @@ urlpatterns = [
         views.scrape_run_action,
         name='scrape-run-action',
     ),
-    path('port-hello/', views.port_hello, name='port-hello'),
+    path('demo-sites/build/', views.build_demo_site, name='build-demo-site'),
+    path('demo-sites/<path:paper_id>/status/', views.demo_site_status, name='demo-site-status'),
+    path('demo-sites/<path:paper_id>/', views.demo_site, name='demo-site'),
+    path('port-hello/', views.build_demo_site, name='port-hello'),
 ]

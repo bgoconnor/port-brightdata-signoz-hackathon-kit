@@ -16,8 +16,8 @@ class KubernetesJobError(RuntimeError):
     pass
 
 
-def create_port_hello_job(paper_id: str) -> str:
-    job_name = f'port-hello-{uuid.uuid4().hex[:12]}'
+def create_demo_site_job(paper_id: str) -> str:
+    job_name = f'demo-site-{uuid.uuid4().hex[:12]}'
     namespace = os.environ.get('POD_NAMESPACE', 'hackathon')
     otel_attributes = os.environ.get(
         'OTEL_RESOURCE_ATTRIBUTES',
@@ -33,7 +33,7 @@ def create_port_hello_job(paper_id: str) -> str:
         },
         'spec': {
             'backoffLimit': 0,
-            'activeDeadlineSeconds': 180,
+            'activeDeadlineSeconds': 900,
             'ttlSecondsAfterFinished': 600,
             'template': {
                 'metadata': {'labels': {'app': 'hackathon-port-job'}},
@@ -44,7 +44,7 @@ def create_port_hello_job(paper_id: str) -> str:
                         'name': 'port-job',
                         'image': os.environ.get('PORT_JOB_IMAGE', 'hackathon-backend:local'),
                         'imagePullPolicy': 'Never',
-                        'command': ['opentelemetry-instrument', 'python', 'manage.py', 'port_hello'],
+                        'command': ['opentelemetry-instrument', 'python', 'manage.py', 'build_demo_site'],
                         'args': ['--paper-id', paper_id],
                         'env': [
                             {'name': 'POSTGRES_HOST', 'value': os.environ.get('POSTGRES_HOST', 'hackathon-postgres')},
@@ -117,3 +117,8 @@ def create_port_hello_job(paper_id: str) -> str:
     except URLError as error:
         raise KubernetesJobError(f'Could not reach Kubernetes API: {error.reason}') from error
     return job_name
+
+
+def create_port_hello_job(paper_id: str) -> str:
+    """Compatibility alias for the original proof-of-connectivity endpoint."""
+    return create_demo_site_job(paper_id)

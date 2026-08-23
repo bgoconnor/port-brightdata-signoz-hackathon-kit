@@ -28,3 +28,12 @@ the reproduction action until their PostgreSQL-backed content is available.
 - `contracts/`: versioned, transport-neutral Kubernetes request/result schemas.
 
 Machine credentials belong in `.env` and must not be committed.
+
+## Demo-site MVP workflow
+
+`workflows/article-to-demo-site.json` is the versioned definition of the live
+`article_to_demo_site` workflow. Its self-service trigger accepts complete article
+text plus feedback from a prior runtime attempt. Port AI returns one self-contained
+HTML document and a short summary. The Kubernetes job—not Port—validates, persists,
+and serves the generated site; if validation fails, it starts another Port run with
+the observed failure attached as `observability_feedback`.
