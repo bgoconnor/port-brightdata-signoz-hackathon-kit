@@ -31,7 +31,7 @@ def _validate_html(html):
 
 
 def _workflow_result(token, run_id):
-    deadline = time.monotonic() + 300
+    deadline = time.monotonic() + 600
     while time.monotonic() < deadline:
         payload, _ = _port_request('GET', f'workflows/runs/{run_id}', token=token)
         run = payload.get('workflowRun', payload)

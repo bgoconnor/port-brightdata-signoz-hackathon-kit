@@ -33,7 +33,7 @@ def create_demo_site_job(paper_id: str) -> str:
         },
         'spec': {
             'backoffLimit': 0,
-            'activeDeadlineSeconds': 900,
+            'activeDeadlineSeconds': 1800,
             'ttlSecondsAfterFinished': 600,
             'template': {
                 'metadata': {'labels': {'app': 'hackathon-port-job'}},
