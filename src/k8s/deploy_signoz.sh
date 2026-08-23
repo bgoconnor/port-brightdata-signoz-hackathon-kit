@@ -2,8 +2,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SIGNOZ_NAMESPACE="${SIGNOZ_NAMESPACE:-signoz}"
+SIGNOZ_NAMESPACE="${SIGNOZ_NAMESPACE:-hackathon}"
 SIGNOZ_CHART_VERSION="${SIGNOZ_CHART_VERSION:-0.138.0}"
+SIGNOZ_K8S_INFRA_CHART_VERSION="${SIGNOZ_K8S_INFRA_CHART_VERSION:-0.17.0}"
 
 for required_command in helm kubectl; do
   if ! command -v "${required_command}" >/dev/null 2>&1; then
@@ -29,6 +30,13 @@ helm upgrade --install signoz signoz/signoz \
   --values "${SCRIPT_DIR}/signoz-values.yaml" \
   --wait \
   --timeout 30m
+
+helm upgrade --install signoz-k8s-infra signoz/k8s-infra \
+  --namespace "${SIGNOZ_NAMESPACE}" \
+  --version "${SIGNOZ_K8S_INFRA_CHART_VERSION}" \
+  --values "${SCRIPT_DIR}/signoz-k8s-infra-values.yaml" \
+  --wait \
+  --timeout 10m
 
 kubectl -n "${SIGNOZ_NAMESPACE}" get pods
 

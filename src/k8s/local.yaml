@@ -4,6 +4,36 @@ kind: Namespace
 metadata:
   name: hackathon
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: hackathon-backend
+  namespace: hackathon
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: hackathon-job-launcher
+  namespace: hackathon
+rules:
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: hackathon-job-launcher
+  namespace: hackathon
+subjects:
+  - kind: ServiceAccount
+    name: hackathon-backend
+    namespace: hackathon
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: hackathon-job-launcher
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -68,6 +98,7 @@ spec:
       labels:
         app: hackathon-backend
     spec:
+      serviceAccountName: hackathon-backend
       containers:
         - name: backend
           image: hackathon-backend:local
@@ -103,12 +134,20 @@ spec:
                   key: BRIGHTDATA_OPENAI_COLLECTOR_ID
             - name: DJANGO_SETTINGS_MODULE
               value: config.settings
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: PORT_JOB_IMAGE
+              value: hackathon-backend:local
+            - name: PORT_API_URL
+              value: https://api.port.io/v1
             - name: OTEL_SERVICE_NAME
               value: hackathon-backend
             - name: OTEL_RESOURCE_ATTRIBUTES
               value: service.namespace=paper-factory,service.version=local,deployment.environment=local
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: http://signoz-otel-collector.signoz.svc.cluster.local:4318
+              value: http://signoz-otel-collector.hackathon.svc.cluster.local:4318
             - name: OTEL_EXPORTER_OTLP_PROTOCOL
               value: http/protobuf
             - name: OTEL_TRACES_EXPORTER

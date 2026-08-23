@@ -7,7 +7,7 @@ REPO_ROOT="$(cd "${SRC_ROOT}/.." && pwd)"
 ENV_FILE="${REPO_ROOT}/.env"
 
 if [[ ! -f "${ENV_FILE}" ]]; then
-  echo "Missing ${ENV_FILE}. Copy .env.example to .env and set BRIGHTDATA_API_KEY."
+  echo "Missing ${ENV_FILE}. Create it with the required Bright Data and Port credentials."
   exit 1
 fi
 
@@ -17,14 +17,20 @@ set +a
 
 : "${BRIGHTDATA_API_KEY:?BRIGHTDATA_API_KEY must be set in ${ENV_FILE}}"
 : "${BRIGHTDATA_COLLECTOR_ID:?BRIGHTDATA_COLLECTOR_ID must be set in ${ENV_FILE}}"
-: "${BRIGHTDATA_ANTHROPIC_COLLECTOR_ID:?BRIGHTDATA_ANTHROPIC_COLLECTOR_ID must be set in ${ENV_FILE}}"
+
+: "${PORT_CLIENT_ID:?PORT_CLIENT_ID must be set in ${ENV_FILE}}"
+: "${PORT_CLIENT_SECRET:?PORT_CLIENT_SECRET must be set in ${ENV_FILE}}"
 
 kubectl create namespace hackathon --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n hackathon create secret generic hackathon-brightdata \
   --from-literal=BRIGHTDATA_API_KEY="${BRIGHTDATA_API_KEY}" \
   --from-literal=BRIGHTDATA_COLLECTOR_ID="${BRIGHTDATA_COLLECTOR_ID}" \
-  --from-literal=BRIGHTDATA_ANTHROPIC_COLLECTOR_ID="${BRIGHTDATA_ANTHROPIC_COLLECTOR_ID}" \
+  --from-literal=BRIGHTDATA_ANTHROPIC_COLLECTOR_ID="${BRIGHTDATA_ANTHROPIC_COLLECTOR_ID:-}" \
   --from-literal=BRIGHTDATA_OPENAI_COLLECTOR_ID="${BRIGHTDATA_OPENAI_COLLECTOR_ID:-}" \
+  --dry-run=client -o yaml | kubectl apply -f -
+kubectl -n hackathon create secret generic hackathon-port \
+  --from-literal=PORT_CLIENT_ID="${PORT_CLIENT_ID}" \
+  --from-literal=PORT_CLIENT_SECRET="${PORT_CLIENT_SECRET}" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 if [[ "${HACKATHON_SKIP_SIGNOZ:-0}" != "1" ]]; then
@@ -45,4 +51,4 @@ kubectl -n hackathon exec deployment/hackathon-backend -- \
 kubectl -n hackathon rollout status deployment/hackathon-frontend
 
 echo "Run: kubectl -n hackathon port-forward service/hackathon-frontend 5173:5173"
-echo "SigNoz: kubectl -n signoz port-forward service/signoz 8080:8080"
+echo "SigNoz: kubectl -n hackathon port-forward service/signoz 8080:8080"

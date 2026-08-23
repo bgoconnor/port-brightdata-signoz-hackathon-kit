@@ -1,10 +1,12 @@
+import json
 import os
 from unittest.mock import patch
 
 from django.test import TestCase
 from django.utils import timezone
 
-from .models import Paper, ScrapeRun
+from .models import DemoSite, Paper, ScrapeRun
+from .management.commands.build_demo_site import _validate_html
 from .services import _normalize_record, refresh_scrape, start_scrape
 
 
@@ -121,3 +123,100 @@ class MultiSourceTests(TestCase):
         self.assertEqual(run.collector_id, 'c_anthropic')
         self.assertEqual(run.target_url, 'https://www.anthropic.com/research')
         request_json.assert_called_once()
+
+
+class DemoSiteApiTests(TestCase):
+    def setUp(self):
+        self.paper = Paper.objects.create(
+            paper_id='arxiv:2608.00004',
+            source='arxiv',
+            source_id='2608.00004',
+            arxiv_id='2608.00004',
+            title='A Port hello paper',
+            authors=['Test Author'],
+            abstract='An abstract',
+            full_text='Full methods and evidence. ' * 80,
+            subjects=['cs.AI'],
+            score=0.5,
+            reproducible=True,
+            scraped_at=timezone.now(),
+        )
+
+    @patch('scraper.views.create_demo_site_job', return_value='demo-site-123456789abc')
+    def test_post_creates_kubernetes_job(self, create_job):
+        response = self.client.post(
+            '/api/demo-sites/build/',
+            data=json.dumps({'paper_id': self.paper.paper_id}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.json()['job_name'], 'demo-site-123456789abc')
+        create_job.assert_called_once_with(self.paper.paper_id)
+        self.assertEqual(self.paper.demo_site.status, DemoSite.Status.QUEUED)
+
+    def test_unknown_paper_returns_not_found(self):
+        response = self.client.post(
+            '/api/demo-sites/build/',
+            data=json.dumps({'paper_id': 'arxiv:missing'}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_abstract_only_paper_is_rejected(self):
+        self.paper.full_text = ''
+        self.paper.save(update_fields=['full_text'])
+
+        response = self.client.post(
+            '/api/demo-sites/build/',
+            data=json.dumps({'paper_id': self.paper.paper_id}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 409)
+        self.assertIn('no full text', response.json()['error'])
+
+    def test_ready_site_is_served_with_restrictive_csp(self):
+        DemoSite.objects.create(
+            paper=self.paper,
+            status=DemoSite.Status.READY,
+            html='<!doctype html><html><body><button>Demo</button></body></html>',
+        )
+
+        response = self.client.get(f'/api/demo-sites/{self.paper.paper_id}/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/html; charset=utf-8')
+        self.assertIn("default-src 'none'", response['Content-Security-Policy'])
+        self.assertEqual(response['X-Frame-Options'], 'SAMEORIGIN')
+
+        detail = self.client.get(f'/api/papers/{self.paper.paper_id}/').json()
+        self.assertEqual(detail['demo_site']['status'], DemoSite.Status.READY)
+        self.assertEqual(
+            detail['demo_site']['site_url'],
+            f'/api/demo-sites/{self.paper.paper_id}/',
+        )
+
+    def test_validator_rejects_external_assets(self):
+        html = (
+            '<!doctype html><html><body>'
+            '<script src="https://example.com/app.js"></script>'
+            + ('interactive explanation ' * 50)
+            + '</body></html>'
+        )
+
+        self.assertIn(
+            'External network asset detected; all assets must be inline.',
+            _validate_html(html),
+        )
+
+    def test_validator_allows_external_citation_links(self):
+        html = (
+            '<!doctype html><html><body>'
+            '<a href="https://arxiv.org/abs/2608.19202">paper</a><script>document.body.dataset.ready="1"</script>'
+            + ('interactive explanation ' * 50)
+            + '</body></html>'
+        )
+
+        self.assertEqual(_validate_html(html), [])

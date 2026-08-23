@@ -57,6 +57,19 @@ export function normalizePaper(raw) {
     source_url: asString(p.source_url),
     status: STATUSES.includes(status) ? status : "ingested",
     retry_count: asNumber(p.retry_count, 0),
+    enriched: Boolean(p.enriched),
+    demo_site:
+      p.demo_site && typeof p.demo_site === "object"
+        ? {
+            status: asString(p.demo_site.status),
+            summary: asString(p.demo_site.summary),
+            iteration: asNumber(p.demo_site.iteration, 0),
+            port_workflow_run_id: asString(p.demo_site.port_workflow_run_id),
+            job_name: asString(p.demo_site.job_name),
+            error: asString(p.demo_site.error),
+            site_url: asString(p.demo_site.site_url),
+          }
+        : null,
     generated_code: asString(p.generated_code),
     run_output: asString(p.run_output),
     review_note: asString(p.review_note),
@@ -180,4 +193,11 @@ export async function submitReview(id, decision) {
   );
   const raw = unwrap(result.data, "paper");
   return { ...result, data: raw ? normalizePaper(raw) : null };
+}
+
+export async function buildDemoSite(id) {
+  return request("/demo-sites/build/", {
+    method: "POST",
+    body: JSON.stringify({ paper_id: id }),
+  });
 }

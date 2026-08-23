@@ -89,7 +89,33 @@ export function AttemptCard({ a, isLast }) {
   );
 }
 
-export function DetailScreen({ paper, stub, notice, loading, onBack, onDecide, busy }) {
+export function DemoSitePanel({ paper, busy, onBuild }) {
+  const site = paper.demo_site;
+  const status = site?.status || "not_started";
+  const active = status === "queued" || status === "generating";
+  const ready = status === "ready" && site.site_url;
+  return (
+    <div className="pf-demo" data-status={status}>
+      <div className="pf-demo-copy">
+        <u className="pf-eyebrow">Port-generated demo website</u>
+        <h2>{ready ? "The website is ready." : active ? "Port is building the website." : status === "failed" ? "The website needs another run." : "Build an interactive website from this paper."}</h2>
+        <p>{site?.summary || (active
+          ? "The Kubernetes job is waiting for Port, validating the result, and will retry with observed failures when necessary."
+          : "Port generates the site; Kubernetes validates, stores, and serves the accepted result.")}</p>
+        {site?.job_name ? <code>job {site.job_name}</code> : null}
+        {site?.error ? <pre>{site.error}</pre> : null}
+      </div>
+      <div className="pf-demo-actions">
+        {ready ? <a className="pf-btn pf-btn--approve" href={site.site_url} target="_blank" rel="noreferrer noopener">open full site</a> : null}
+        {!active && !ready ? <button className="pf-btn pf-btn--approve" disabled={busy || !paper.enriched} onClick={onBuild}>{busy ? "starting" : status === "failed" ? "retry build" : "build website"}</button> : null}
+        {!paper.enriched ? <span>full text required</span> : null}
+      </div>
+      {ready ? <iframe className="pf-demo-frame" title={paper.title + " demo website"} src={site.site_url} sandbox="allow-scripts" /> : null}
+    </div>
+  );
+}
+
+export function DetailScreen({ paper, stub, notice, loading, onBack, onDecide, busy, demoBusy, onBuildDemo }) {
   const p = paper || stub;
   if (!p) {
     return (
@@ -144,6 +170,8 @@ export function DetailScreen({ paper, stub, notice, loading, onBack, onDecide, b
         </div>
       ) : null}
       {p.review_note ? <div className="pf-note"><b>reviewer note</b>{p.review_note}</div> : null}
+
+      <DemoSitePanel paper={p} busy={demoBusy} onBuild={onBuildDemo} />
 
       <ReproSummary p={p} />
 

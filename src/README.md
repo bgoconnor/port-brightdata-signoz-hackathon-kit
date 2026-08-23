@@ -19,8 +19,11 @@ minikube start --memory=8g --cpus=4 --disk-size=30g
 
 The root `.env` must contain `BRIGHTDATA_API_KEY`, `BRIGHTDATA_COLLECTOR_ID`, and
 `BRIGHTDATA_ANTHROPIC_COLLECTOR_ID`. `BRIGHTDATA_OPENAI_COLLECTOR_ID` is optional
-until a healthy OpenAI collector is configured. The deploy script loads them and
-creates or updates the `hackathon-brightdata` Kubernetes Secret.
+until a healthy OpenAI collector is configured. It must also contain
+`PORT_CLIENT_ID` and `PORT_CLIENT_SECRET` from the Port credentials page. The
+deploy script loads them and creates or updates the Kubernetes Secrets.
+Both Port values are required by the deployment script because the Kubernetes
+Job authenticates to Port at runtime.
 
 ## Start the project
 
@@ -38,7 +41,7 @@ Build and deploy the frontend, backend, PostgreSQL, and SigNoz:
 
 The script creates the `hackathon` namespace, deploys the application, and runs
 the default Django migrations. It installs pinned official SigNoz Helm charts in
-the separate `signoz` namespace. The Django service exports its traces, HTTP and
+the same namespace. The Django service exports its traces, HTTP and
 database metrics, and trace-correlated application logs directly over OTLP.
 
 To update only SigNoz, run:
@@ -74,12 +77,33 @@ kubectl -n hackathon port-forward service/hackathon-backend 8000:8000
 
 The default Django admin is at <http://localhost:8000/admin/>.
 
+## Trigger the Port hello Job
+
+Choose a `paper_id` returned by `/api/papers/`, then ask Django to create the
+one-off Kubernetes Job:
+
+```bash
+curl -X POST http://localhost:8000/api/port-hello/ \
+  -H 'Content-Type: application/json' \
+  -d '{"paper_id":"arxiv:2608.00001"}'
+```
+
+The response contains the Job name. Inspect it with:
+
+```bash
+kubectl -n hackathon get jobs -l app=hackathon-port-job
+kubectl -n hackathon logs job/<job-name>
+```
+
+The Job authenticates to Port and performs the read-only hello call
+`GET /v1/organization`. It does not create or change anything in Port.
+
 ## Access SigNoz
 
 Forward the SigNoz UI in another terminal:
 
 ```bash
-kubectl -n signoz port-forward service/signoz 8080:8080
+kubectl -n hackathon port-forward service/signoz 8080:8080
 ```
 
 Open <http://localhost:8080> and create the local administrator account when
@@ -95,6 +119,7 @@ curl -fsS http://localhost:8000/api/scrape-runs/ | python -m json.tool
 In SigNoz, look for:
 
 - `hackathon-backend` under Services and Traces.
+- `hackathon-port-job` after triggering the Port hello Job.
 - Django HTTP metrics in Metrics Explorer, filtered by
   `service.name = hackathon-backend`.
 - application logs filtered by `service.name = hackathon-backend`.
@@ -107,8 +132,8 @@ helm list -n hackathon
 kubectl -n hackathon logs -f deployment/hackathon-backend
 kubectl -n hackathon logs -f deployment/hackathon-frontend
 kubectl -n hackathon logs -f deployment/hackathon-postgres
-kubectl -n signoz get pods
-kubectl -n signoz logs deployment/signoz-otel-collector --tail=100
+kubectl -n hackathon get pods
+kubectl -n hackathon logs deployment/signoz-otel-collector --tail=100
 ```
 
 The deployment follows SigNoz's official

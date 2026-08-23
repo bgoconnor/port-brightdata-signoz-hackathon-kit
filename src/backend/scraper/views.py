@@ -1,10 +1,12 @@
 import json
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
-from .models import Attempt, Paper, Reproduction, ScrapeRun
+from .models import Attempt, DemoSite, Paper, Reproduction, ScrapeRun
+from .port_job import KubernetesJobError, create_demo_site_job
 from .services import BrightDataError, control_scrape, refresh_scrape, start_scrape
 
 
@@ -75,6 +77,24 @@ def _serialize_attempt(attempt: Attempt) -> dict:
 def _serialize_detail(paper: Paper) -> dict:
     """Detail-shape paper per API.md: list fields plus reproduction evidence."""
     data = _serialize_paper(paper)
+    site = getattr(paper, 'demo_site', None)
+    data['demo_site'] = (
+        {
+            'status': site.status,
+            'summary': site.summary,
+            'iteration': site.iteration,
+            'port_workflow_run_id': site.port_workflow_run_id,
+            'job_name': site.job_name,
+            'error': site.error,
+            'site_url': (
+                f'/api/demo-sites/{paper.paper_id}/'
+                if site.status == DemoSite.Status.READY
+                else None
+            ),
+        }
+        if site is not None
+        else None
+    )
     repro = getattr(paper, 'reproduction', None)
     if repro is None:
         data.update(
@@ -204,3 +224,73 @@ def scrape_run_action(request, run_id: int, action: str):
         return JsonResponse({'error': f'Unsupported action: {action}'}, status=400)
     status = 200 if run.status != ScrapeRun.Status.FAILED else 502
     return JsonResponse({'run': _serialize_run(run)}, status=status)
+
+
+@csrf_exempt
+@require_POST
+def build_demo_site(request):
+    """Launch a one-off job that asks Port to generate a paper demo site."""
+    try:
+        payload = json.loads(request.body or b'{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Request body must be valid JSON'}, status=400)
+    paper_id = str(payload.get('paper_id') or '').strip()
+    if not paper_id:
+        return JsonResponse({'error': 'paper_id is required'}, status=400)
+    paper = get_object_or_404(Paper, pk=paper_id)
+    if not paper.full_text.strip():
+        return JsonResponse(
+            {'error': 'Paper has no full text; refusing an abstract-only demo'},
+            status=409,
+        )
+    try:
+        site, _ = DemoSite.objects.get_or_create(paper=paper)
+        site.status = DemoSite.Status.QUEUED
+        site.error = ''
+        site.save(update_fields=['status', 'error', 'updated_at'])
+        job_name = create_demo_site_job(paper.paper_id)
+    except KubernetesJobError as error:
+        return JsonResponse({'error': str(error)}, status=502)
+    return JsonResponse(
+        {'paper_id': paper.paper_id, 'job_name': job_name, 'status': 'queued'},
+        status=202,
+    )
+
+
+@require_GET
+def demo_site_status(request, paper_id: str):
+    paper = get_object_or_404(Paper, pk=paper_id)
+    site = get_object_or_404(DemoSite, paper=paper)
+    return JsonResponse({
+        'paper_id': paper.paper_id,
+        'status': site.status,
+        'summary': site.summary,
+        'iteration': site.iteration,
+        'port_workflow_run_id': site.port_workflow_run_id,
+        'job_name': site.job_name,
+        'error': site.error,
+        'site_url': f'/api/demo-sites/{paper.paper_id}/' if site.status == DemoSite.Status.READY else None,
+        'attempts': [
+            {
+                'iteration': attempt.iteration,
+                'port_workflow_run_id': attempt.port_workflow_run_id,
+                'status': attempt.status,
+                'observations': attempt.observations,
+            }
+            for attempt in site.attempts.all()
+        ],
+    })
+
+
+@require_GET
+@xframe_options_sameorigin
+def demo_site(request, paper_id: str):
+    paper = get_object_or_404(Paper, pk=paper_id)
+    site = get_object_or_404(DemoSite, paper=paper, status=DemoSite.Status.READY)
+    response = HttpResponse(site.html, content_type='text/html; charset=utf-8')
+    response['Content-Security-Policy'] = (
+        "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; "
+        "img-src data:; font-src data:; base-uri 'none'; form-action 'none'"
+    )
+    response['X-Content-Type-Options'] = 'nosniff'
+    return response
