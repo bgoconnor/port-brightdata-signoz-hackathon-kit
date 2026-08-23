@@ -18,9 +18,8 @@ set +a
 : "${BRIGHTDATA_API_KEY:?BRIGHTDATA_API_KEY must be set in ${ENV_FILE}}"
 : "${BRIGHTDATA_COLLECTOR_ID:?BRIGHTDATA_COLLECTOR_ID must be set in ${ENV_FILE}}"
 
-if [[ -z "${PORT_CLIENT_ID:-}" || -z "${PORT_CLIENT_SECRET:-}" ]]; then
-  echo "Warning: Port credentials are empty; the Port hello Job will fail until they are set."
-fi
+: "${PORT_CLIENT_ID:?PORT_CLIENT_ID must be set in ${ENV_FILE}}"
+: "${PORT_CLIENT_SECRET:?PORT_CLIENT_SECRET must be set in ${ENV_FILE}}"
 
 kubectl create namespace hackathon --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n hackathon create secret generic hackathon-brightdata \
@@ -30,8 +29,8 @@ kubectl -n hackathon create secret generic hackathon-brightdata \
   --from-literal=BRIGHTDATA_OPENAI_COLLECTOR_ID="${BRIGHTDATA_OPENAI_COLLECTOR_ID:-}" \
   --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n hackathon create secret generic hackathon-port \
-  --from-literal=PORT_CLIENT_ID="${PORT_CLIENT_ID:-}" \
-  --from-literal=PORT_CLIENT_SECRET="${PORT_CLIENT_SECRET:-}" \
+  --from-literal=PORT_CLIENT_ID="${PORT_CLIENT_ID}" \
+  --from-literal=PORT_CLIENT_SECRET="${PORT_CLIENT_SECRET}" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 if [[ "${HACKATHON_SKIP_SIGNOZ:-0}" != "1" ]]; then

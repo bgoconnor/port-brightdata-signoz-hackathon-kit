@@ -22,8 +22,8 @@ The root `.env` must contain `BRIGHTDATA_API_KEY`, `BRIGHTDATA_COLLECTOR_ID`, an
 until a healthy OpenAI collector is configured. It must also contain
 `PORT_CLIENT_ID` and `PORT_CLIENT_SECRET` from the Port credentials page. The
 deploy script loads them and creates or updates the Kubernetes Secrets.
-The rest of the project can deploy without them, but the Port hello Job will
-fail with a configuration error until both values are set.
+Both Port values are required by the deployment script because the Kubernetes
+Job authenticates to Port at runtime.
 
 ## Start the project
 

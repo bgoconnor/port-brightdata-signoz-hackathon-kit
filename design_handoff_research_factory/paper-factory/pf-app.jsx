@@ -1,15 +1,3 @@
-/* Ported from the design handoff (pf-app.jsx) to ES modules.
-   Root: view switching, 4s polling, degradation handling. State-based
-   view switching as in the prototype - no router. */
-
-import React from "react";
-import { PFMark } from "./components/hero.jsx";
-import { Notice } from "./components/ui.jsx";
-import { PipelineScreen } from "./components/list.jsx";
-import { DetailScreen } from "./components/detail.jsx";
-import { SettingsScreen, SignInScreen, WaitlistScreen } from "./components/account.jsx";
-import { fetchPaper, fetchPapers, fetchSummary, submitReview } from "./api/client.js";
-
 /* Paper Factory — root: routing, polling, degradation handling. */
 
 const PF_POLL_MS = 4000;
@@ -30,11 +18,7 @@ class PFBoundary extends React.Component {
   }
 }
 
-/* Top bar: logo tile, factory/settings tabs, then on the right the
-   "N repros ready" pill, the light/dark toggle and the waitlist CTA.
-   The live/poll chip and sign-in button stay removed; SignInScreen is
-   kept in code but unlinked. */
-function TopBar({ awaiting, view, go, theme, onTheme }) {
+function TopBar({ mode, updatedAt, awaiting, view, go, signedIn, theme, onTheme }) {
   const tab = (k, label) => (
     <button className="pf-tab" aria-current={view === k || (k === "list" && view === "detail") ? "page" : undefined} onClick={() => go(k)}>{label}</button>
   );
@@ -57,7 +41,7 @@ function TopBar({ awaiting, view, go, theme, onTheme }) {
   );
 }
 
-export default function PaperFactory() {
+function PaperFactory() {
   const [list, setList] = React.useState([]);
   const [summary, setSummary] = React.useState(null);
   const [mode, setMode] = React.useState("fallback");
@@ -69,7 +53,7 @@ export default function PaperFactory() {
   const [loadingDetail, setLoadingDetail] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [signedIn, setSignedIn] = React.useState(false);
-  const [theme, setTheme] = React.useState(() => document.documentElement.dataset.pfTheme || "light");
+  const [theme, setTheme] = React.useState(() => document.documentElement.dataset.pfTheme || "dark");
   React.useEffect(() => {
     document.documentElement.dataset.pfTheme = theme;
     try { localStorage.setItem("pf-theme", theme); } catch (e) {}
@@ -80,11 +64,11 @@ export default function PaperFactory() {
   const clock = () => new Date().toLocaleTimeString([], { hour12: false });
 
   const poll = React.useCallback(() => {
-    fetchSummary().then(r => { setSummary(r.data); setMode(r.source); setNotice(r.notice); setUpdatedAt(clock()); }).catch(() => {});
-    fetchPapers().then(r => { if (Array.isArray(r.data) && r.data.length) setList(r.data); if (r.notice) setNotice(r.notice); }).catch(() => {});
+    PFApi.summary().then(r => { setSummary(r.data); setMode(r.source); setNotice(r.notice); setUpdatedAt(clock()); }).catch(() => {});
+    PFApi.papers().then(r => { if (Array.isArray(r.data) && r.data.length) setList(r.data); if (r.notice) setNotice(r.notice); }).catch(() => {});
     const v = viewRef.current;
     if (v.name === "detail" && v.id) {
-      fetchPaper(v.id).then(r => {
+      PFApi.paper(v.id).then(r => {
         if (viewRef.current.id !== v.id) return;
         if (r.data) setDetail(r.data);
         setDetailNotice(r.notice);
@@ -102,7 +86,7 @@ export default function PaperFactory() {
     setView({ name: "detail", id: id });
     setDetail(null); setDetailNotice(null); setLoadingDetail(true);
     window.scrollTo(0, 0);
-    fetchPaper(id).then(r => { setDetail(r.data); setDetailNotice(r.notice); setLoadingDetail(false); })
+    PFApi.paper(id).then(r => { setDetail(r.data); setDetailNotice(r.notice); setLoadingDetail(false); })
       .catch(() => { setLoadingDetail(false); setDetailNotice("This paper could not be loaded."); });
   }, []);
 
@@ -115,8 +99,8 @@ export default function PaperFactory() {
     setBusy(true);
     const optimistic = decision === "approve" ? "approved" : "rejected";
     setDetail(d => (d ? Object.assign({}, d, { status: optimistic }) : d));
-    setList(l => l.map(p => (p.paper_id === id ? Object.assign({}, p, { status: optimistic }) : p)));
-    submitReview(id, decision).then(r => {
+    setList(l => l.map(p => (p.arxiv_id === id ? Object.assign({}, p, { status: optimistic }) : p)));
+    PFApi.review(id, decision).then(r => {
       if (r.data) setDetail(r.data);
       setDetailNotice(r.notice);
       setBusy(false);
@@ -125,11 +109,11 @@ export default function PaperFactory() {
   }, [poll]);
 
   const awaiting = list.filter(p => p.status === "awaiting_review").length;
-  const stub = view.id ? list.find(p => p.paper_id === view.id) : null;
+  const stub = view.id ? list.find(p => p.arxiv_id === view.id) : null;
 
   return (
     <div className="pf-shell">
-      <TopBar awaiting={awaiting} view={view.name} go={go} theme={theme} onTheme={() => setTheme(t => (t === "dark" ? "light" : "dark"))} />
+      <TopBar mode={mode} updatedAt={updatedAt} awaiting={awaiting} view={view.name} go={go} signedIn={signedIn} theme={theme} onTheme={() => setTheme(t => (t === "dark" ? "light" : "dark"))} />
       <PFBoundary>
         {view.name === "list"
           ? <PipelineScreen list={list} summary={summary} notice={notice} onOpen={open} onWaitlist={() => go("waitlist")} />
@@ -145,3 +129,4 @@ export default function PaperFactory() {
   );
 }
 
+Object.assign(window, { PaperFactory, TopBar, PFBoundary, PF_POLL_MS });
